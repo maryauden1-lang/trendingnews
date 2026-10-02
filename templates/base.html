@@ -7,7 +7,7 @@
     <title>{% block title %}{{ site_setting.site_name|default:"Trending News" }}{% endblock %}</title>
     <!-- Font Awesome for Social Media Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=999">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 
@@ -42,7 +42,7 @@
                         <img src="{{ site_setting.site_logo.url }}" 
                              alt="{{ site_setting.site_name|default:'Trending News' }}" 
                              class="brand-rect-logo protected-img" 
-                             draggable="false"
+                             draggable="false" 
                              oncontextmenu="return false;">
                     {% else %}
                         <div class="brand-fallback-logo">
@@ -183,7 +183,7 @@
                 </div>
             </div>
 
-            <!-- Dynamic Legal Pages (Direct links to their slug) -->
+            <!-- Dynamic Legal Pages -->
             <ul class="bbc-sub-links">
                 {% for legal in legal_pages %}
                     <li><a href="{% url 'legal_detail' legal.slug %}">{{ legal.title }}</a></li>
