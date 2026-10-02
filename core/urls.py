@@ -8,14 +8,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('news.urls')),
 
-    # ==============================================================================
-    # MEDIA FILES SERVING (Allows logos & article images to display on Render)
-    # ==============================================================================
+    # Media files route for Render production
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 
-    # ==============================================================================
-    # PASSWORD RESET WORKFLOW (BREVO REAL-TIME SMTP)
-    # ==============================================================================
+    # Password reset routes
     path(
         'password-reset/', 
         auth_views.PasswordResetView.as_view(
