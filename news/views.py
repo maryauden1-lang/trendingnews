@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
@@ -170,18 +172,37 @@ def user_register(request):
         password = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')
 
+        # Fallback check in case the HTML template used password_2 or confirm
+        if not confirm_password:
+            confirm_password = request.POST.get('password_confirm', '') or request.POST.get('password_2', '')
+
+        if not username or not password:
+            messages.error(request, "Username and password cannot be empty.")
+            return render(request, 'news/register.html', get_common_context())
+
         if password != confirm_password:
-            messages.info(request, "Passwords do not match.")
+            messages.error(request, "Passwords do not match.")
             return render(request, 'news/register.html', get_common_context())
 
-        if User.objects.filter(username=username).exists():
-            messages.info(request, "This username is already taken.")
+        if User.objects.filter(username__iexact=username).exists():
+            messages.error(request, f"The username '{username}' is already taken. Please pick another.")
             return render(request, 'news/register.html', get_common_context())
 
-        user = User.objects.create_user(username=username, email=email, password=password)
-        auth_login(request, user)
-        messages.success(request, f"Welcome to Trending News, {username}!")
-        return redirect('home')
+        try:
+            validate_password(password)
+        except ValidationError as err:
+            for error_msg in err.messages:
+                messages.error(request, error_msg)
+            return render(request, 'news/register.html', get_common_context())
+
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            auth_login(request, user)
+            messages.success(request, f"Welcome to Trending News, {username}!")
+            return redirect('home')
+        except Exception as e:
+            messages.error(request, f"Error creating account: {str(e)}")
+            return render(request, 'news/register.html', get_common_context())
 
     return render(request, 'news/register.html', get_common_context())
 
@@ -200,7 +221,7 @@ def user_login(request):
             messages.success(request, f"Welcome back, {username}!")
             return redirect('home')
         else:
-            messages.info(request, "Invalid username or password.")
+            messages.error(request, "Invalid username or password.")
 
     return render(request, 'news/login.html', get_common_context())
 
