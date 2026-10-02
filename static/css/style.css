@@ -1,0 +1,487 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #ffffff; /* 100% Solid Pure White */
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --gold: #d4af37;
+  --text-main: #000000;
+  --text-muted: #475569;
+  --border-color: #e2e8f0;
+  --crimson: #d90429;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #ffffff !important; /* Forces pure white globally */
+  color: #000000 !important;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* =========================================
+   CONTINUOUS MOVING BREAKING NEWS TICKER
+   ========================================= */
+.breaking-marquee-container {
+  display: flex;
+  align-items: center;
+  background: var(--crimson);
+  color: #fff;
+  height: 40px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+}
+
+.breaking-label {
+  background: #a0001e;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  padding: 0 16px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.marquee-track {
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1;
+  position: relative;
+}
+
+.marquee-content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee-scroll 28s linear infinite;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  display: inline-block;
+  margin-right: 45px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.ticker-item:hover {
+  text-decoration: underline;
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* ===================================================
+   WHITE HEADER & EXACT BBC MENU + PROTECTED LOGO
+   =================================================== */
+.site-header {
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 4%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bbc-menu-toggle-btn {
+  background-color: #e6e8ea;
+  border: none;
+  border-radius: 2px;
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.bbc-menu-toggle-btn:hover {
+  background-color: #d8dadc;
+}
+
+.menu-bars-icon {
+  font-size: 1.15rem;
+  color: #000;
+}
+
+.menu-search-icon {
+  font-size: 1rem;
+  color: #000;
+}
+
+/* Logo protection */
+.logo-shield-wrapper {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.protected-img {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.logo-hit-shield {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.brand-rect-logo {
+  height: 48px;
+  width: auto;
+  max-width: 240px;
+  object-fit: contain;
+  display: block;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.desktop-nav .nav-link {
+  text-decoration: none;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.desktop-nav .nav-link:hover {
+  text-decoration: underline;
+}
+
+.auth-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-pill:hover {
+  background: #e2e8f0;
+}
+
+.user-greeting {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+/* ===================================================
+   BBC FLYOUT MENU DRAWER
+   =================================================== */
+.bbc-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.bbc-drawer-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bbc-side-drawer {
+  position: fixed;
+  top: 0;
+  left: -380px;
+  width: 340px;
+  height: 100vh;
+  background: #ffffff;
+  color: #000000;
+  z-index: 1001;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.bbc-side-drawer.open {
+  left: 0;
+}
+
+.drawer-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: #000;
+  cursor: pointer;
+}
+
+.drawer-search-form {
+  display: flex;
+  margin: 16px 20px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.drawer-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #000000;
+}
+
+.drawer-search-submit {
+  background: #f1f5f9;
+  border: none;
+  padding: 0 16px;
+  cursor: pointer;
+  color: #000;
+}
+
+.bbc-drawer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.drawer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f2f5;
+  padding: 14px 20px;
+}
+
+.drawer-item a {
+  color: #000000;
+  text-decoration: none;
+  font-size: 1.05rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.drawer-item:hover {
+  background: #f8fafc;
+}
+
+.drawer-item.active-item {
+  background: #f1f5f9;
+  border-left: 4px solid #000;
+}
+
+.drawer-chevron-btn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  color: #000;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.drawer-auth-block {
+  padding: 20px;
+  border-top: 2px solid #e2e8f0;
+  margin-top: auto;
+  background: #f8fafc;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ===================================================
+   BBC FOOTER (SOLID WHITE)
+   =================================================== */
+.bbc-exact-footer {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  border-top: 1px solid #e6e8ea;
+  padding: 35px 24px 45px;
+  margin-top: 40px;
+}
+
+.bbc-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.bbc-logo-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.bbc-blk {
+  background-color: #000000;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1.15rem;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bbc-links-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.bbc-links-list li a {
+  color: #000000;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.bbc-links-list li a:hover {
+  text-decoration: underline;
+}
+
+.bbc-lang-btn-box {
+  margin-bottom: 24px;
+}
+
+.bbc-lang-btn {
+  background-color: #e6e8ea;
+  border: none;
+  color: #000000;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.bbc-lang-btn:hover {
+  background-color: #d8dadc;
+}
+
+.bbc-line {
+  border: 0;
+  border-top: 1px solid #e6e8ea;
+  margin: 24px 0;
+}
+
+.bbc-social-block {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.bbc-follow-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.bbc-icons-cluster {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.bbc-icons-cluster a {
+  color: #000000;
+  font-size: 1.15rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bbc-icons-cluster a:hover {
+  opacity: 0.7;
+}
+
+.bbc-sub-links {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 0;
+  margin-bottom: 18px;
+}
+
+.bbc-sub-links li a {
+  color: #222222;
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.bbc-sub-links li a:hover {
+  text-decoration: underline;
+}
+
+.bbc-legal-notice {
+  font-size: 0.78rem;
+  color: #222222;
+  line-height: 1.6;
+}
+
+.bbc-legal-notice a {
+  color: #000000;
+  text-decoration: none;
+}
+
+.bbc-legal-notice a:hover {
+  text-decoration: underline;
+}

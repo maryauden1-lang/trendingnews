@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_setting.site_name|default:"Trending News" }}{% endblock %}</title>
+    <!-- Font Awesome for Social Media Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=999">
+</head>
+<body>
+
+    <!-- Red Scrolling Breaking News Marquee -->
+    {% if ticker_news %}
+    <div class="breaking-marquee-container">
+        <div class="breaking-label">&bull; FLASH WIRE</div>
+        <div class="marquee-track">
+            <div class="marquee-content">
+                {% for item in ticker_news %}
+                    <a href="{% url 'article_detail' item.slug %}" class="ticker-item">
+                        &bull; {{ item.title }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top White Header -->
+    <header class="site-header">
+        <div class="header-left">
+            <button class="bbc-menu-toggle-btn" id="bbcMenuBtn" aria-label="Open Menu">
+                <i class="fa-solid fa-bars menu-bars-icon"></i>
+                <i class="fa-solid fa-magnifying-glass menu-search-icon"></i>
+            </button>
+
+            <!-- Protected Logo -->
+            <div class="logo-shield-wrapper" oncontextmenu="return false;">
+                <a href="{% url 'home' %}" class="logo-link">
+                    {% if site_setting.site_logo %}
+                        <img src="{{ site_setting.site_logo.url }}" 
+                             alt="{{ site_setting.site_name|default:'Trending News' }}" 
+                             class="brand-rect-logo protected-img" 
+                             draggable="false"
+                             oncontextmenu="return false;">
+                    {% else %}
+                        <div class="brand-fallback-logo">
+                            <span class="fb-badge">TN</span>
+                            <div class="fb-text">
+                                <strong>TRENDING</strong>
+                                <small>NEWS</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="logo-hit-shield" title="{{ site_setting.site_name|default:'Trending News' }}"></div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="desktop-nav">
+            <a href="{% url 'home' %}" class="nav-link {% if not current_category %}active{% endif %}">Home</a>
+            {% for cat in categories %}
+                <a href="{% url 'category_detail' cat.slug %}" class="nav-link {% if current_category == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+            {% endfor %}
+
+            {% if user.is_authenticated %}
+                <span class="user-greeting">Hi, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="auth-pill">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="auth-pill">Sign In</a>
+                <a href="{% url 'register' %}" class="auth-pill" style="border-color: var(--gold); color: #000;">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <!-- BBC Flyout Drawer Backdrop -->
+    <div class="bbc-drawer-backdrop" id="drawerBackdrop"></div>
+
+    <!-- Exact BBC White Flyout Menu Drawer -->
+    <aside class="bbc-side-drawer" id="sideDrawer">
+        <div class="drawer-header">
+            <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close menu">&times;</button>
+        </div>
+
+        <form action="{% url 'search' %}" method="GET" class="drawer-search-form">
+            <input type="text" name="q" placeholder="Search Trending News..." class="drawer-search-input" value="{{ request.GET.q }}">
+            <button type="submit" class="drawer-search-submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+
+        <ul class="bbc-drawer-list">
+            <li class="drawer-item active-item"><a href="{% url 'home' %}">Home</a></li>
+            {% for cat in categories %}
+                <li class="drawer-item">
+                    <a href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a>
+                    <button class="drawer-chevron-btn"><i class="fa-solid fa-chevron-down"></i></button>
+                </li>
+            {% endfor %}
+            <li class="drawer-item"><a href="#">Audio</a></li>
+            <li class="drawer-item"><a href="#">Video</a></li>
+            <li class="drawer-item"><a href="#">Live</a></li>
+            <li class="drawer-item"><a href="#">Weather</a></li>
+        </ul>
+
+        <div class="drawer-auth-block">
+            {% if user.is_authenticated %}
+                <p>Signed in as <strong>{{ user.username }}</strong></p>
+                <a href="{% url 'logout' %}" class="auth-pill" style="display:inline-block; margin-top:8px;">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="auth-pill" style="display:inline-block; margin-right:8px;">Sign In</a>
+                <a href="{% url 'register' %}" class="auth-pill" style="display:inline-block; border-color:var(--gold); color:#000;">Register</a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <main>
+        {% if messages %}
+            <div class="container" style="padding-bottom: 0;">
+                {% for message in messages %}
+                    <div class="message-alert {% if message.tags == 'success' %}message-success{% else %}message-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Exact BBC White Footer -->
+    <footer class="bbc-exact-footer">
+        <div class="bbc-inner">
+            <div class="bbc-logo-row">
+                {% if site_setting.site_logo %}
+                    <img src="{{ site_setting.site_logo.url }}" alt="Trending News" style="height: 38px; width: auto; object-fit: contain;" draggable="false" oncontextmenu="return false;">
+                {% else %}
+                    <span class="bbc-blk">T</span>
+                    <span class="bbc-blk">R</span>
+                    <span class="bbc-blk">E</span>
+                    <span class="bbc-blk">N</span>
+                    <span class="bbc-blk">D</span>
+                    <span class="bbc-blk">I</span>
+                    <span class="bbc-blk">N</span>
+                    <span class="bbc-blk">G</span>
+                {% endif %}
+            </div>
+
+            <ul class="bbc-links-list">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                {% for cat in categories %}
+                    <li><a href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a></li>
+                {% empty %}
+                    <li><a href="{% url 'home' %}">Celebrity Scoop</a></li>
+                    <li><a href="{% url 'home' %}">Crime Watch</a></li>
+                    <li><a href="{% url 'home' %}">Politics</a></li>
+                {% endfor %}
+                <li><a href="#">Audio</a></li>
+                <li><a href="#">Video</a></li>
+                <li><a href="#">Live Wire</a></li>
+            </ul>
+
+            <div class="bbc-lang-btn-box">
+                <button type="button" class="bbc-lang-btn">
+                    <span>{{ site_setting.site_name|default:"Trending" }} in other languages</span>
+                    <i class="fa-solid fa-caret-down"></i>
+                </button>
+            </div>
+
+            <hr class="bbc-line">
+
+            <!-- Social Media Block -->
+            <div class="bbc-social-block">
+                <span class="bbc-follow-label">Follow {{ site_setting.site_name|default:"Trending" }} on:</span>
+                <div class="bbc-icons-cluster">
+                    {% if site_setting.x_url %}<a href="{{ site_setting.x_url }}" target="_blank" aria-label="X / Twitter"><i class="fa-brands fa-x-twitter"></i></a>{% endif %}
+                    {% if site_setting.facebook_url %}<a href="{{ site_setting.facebook_url }}" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>{% endif %}
+                    {% if site_setting.instagram_url %}<a href="{{ site_setting.instagram_url }}" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>{% endif %}
+                    {% if site_setting.tiktok_url %}<a href="{{ site_setting.tiktok_url }}" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>{% endif %}
+                    {% if site_setting.linkedin_url %}<a href="{{ site_setting.linkedin_url }}" target="_blank" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>{% endif %}
+                    {% if site_setting.youtube_url %}<a href="{{ site_setting.youtube_url }}" target="_blank" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>{% endif %}
+                </div>
+            </div>
+
+            <!-- Dynamic Legal Pages (Direct links to their slug) -->
+            <ul class="bbc-sub-links">
+                {% for legal in legal_pages %}
+                    <li><a href="{% url 'legal_detail' legal.slug %}">{{ legal.title }}</a></li>
+                {% endfor %}
+            </ul>
+
+            <p class="bbc-legal-notice">
+                Copyright 2026 {{ site_setting.site_name|default:"TRENDING" }}. All rights reserved. The {{ site_setting.site_name|default:"Trending" }} is not responsible for the content of external sites. 
+                {% with first_legal=legal_pages.first %}
+                    {% if first_legal %}
+                        <a href="{% url 'legal_detail' first_legal.slug %}"><strong>Read about our approach to external linking.</strong></a>
+                    {% endif %}
+                {% endwith %}
+            </p>
+        </div>
+    </footer>
+
+    <!-- Script for Menu Drawer -->
+    <script>
+        const bbcBtn = document.getElementById('bbcMenuBtn');
+        const drawer = document.getElementById('sideDrawer');
+        const backdrop = document.getElementById('drawerBackdrop');
+        const closeBtn = document.getElementById('drawerCloseBtn');
+
+        function openMenu() {
+            drawer.classList.add('open');
+            backdrop.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMenu() {
+            drawer.classList.remove('open');
+            backdrop.classList.remove('open');
+            document.body.style.overflow = 'auto';
+        }
+
+        bbcBtn.addEventListener('click', openMenu);
+        closeBtn.addEventListener('click', closeMenu);
+        backdrop.addEventListener('click', closeMenu);
+    </script>
+</body>
+</html>
