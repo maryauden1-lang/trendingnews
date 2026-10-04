@@ -35,9 +35,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     
-    # Cloudinary persistent media storage
+    # staticfiles MUST come before cloudinary_storage to use the native collectstatic
+    'django.contrib.staticfiles',
     'cloudinary_storage',
     'cloudinary',
     
@@ -103,7 +103,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# Legacy compatibility setting required by django-cloudinary-storage
+# Legacy compatibility pointer for django-cloudinary-storage
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 
@@ -126,15 +126,12 @@ STORAGES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Authentication URLs
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
-# CSRF Trusted Origins for live domain and Render
 CSRF_TRUSTED_ORIGINS = [
     'https://trendingnewsonline.org',
     'https://www.trendingnewsonline.org',
