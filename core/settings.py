@@ -74,12 +74,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database: Safely isolate DATABASE_URL
+# Database configuration
 DATABASES = {
     'default': dj_database_url.config(
         env='DATABASE_URL',
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
     )
 }
 
@@ -137,7 +136,7 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 # ==============================================================================
-# SSL REVERSE PROXY & CSRF SECURITY (RENDER LIVE FIX)
+# SSL REVERSE PROXY & SESSION SECURITY
 # ==============================================================================
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
@@ -154,8 +153,14 @@ if RENDER_EXTERNAL_HOSTNAME:
     if origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(origin)
 
-CSRF_COOKIE_SECURE = True
+# Session persistence settings to prevent unexpected logouts on file upload
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = 86400  # 1 day in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = False
 
 # ==============================================================================
