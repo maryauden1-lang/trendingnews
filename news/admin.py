@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdminCommandLog
 from .command_runner import run_admin_command
 
@@ -39,6 +40,25 @@ class SubscriberAdmin(admin.ModelAdmin):
 @admin.register(SiteSetting)
 class SiteSettingAdmin(admin.ModelAdmin):
     list_display = ('site_name', 'x_url', 'facebook_url', 'instagram_url')
+
+    def has_add_permission(self, request):
+        # Prevent creating multiple configurations if one already exists
+        return not SiteSetting.objects.exists()
+
+    def changelist_view(self, request, extra_context=None):
+        # Auto-redirect straight to the edit form if an instance exists
+        obj = SiteSetting.objects.first()
+        if obj:
+            return HttpResponseRedirect(
+                reverse('admin:news_sitesetting_change', args=[obj.pk])
+            )
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def save_model(self, request, obj, form, change):
+        try:
+            super().save_model(request, obj, form, change)
+        except Exception as e:
+            messages.error(request, f"Error saving site settings: {e}")
 
 
 @admin.register(LegalPage)
