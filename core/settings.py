@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     
-    # staticfiles MUST come before cloudinary_storage to use the native collectstatic
+    # staticfiles MUST come before cloudinary_storage to use native collectstatic
     'django.contrib.staticfiles',
     'cloudinary_storage',
     'cloudinary',
@@ -152,6 +152,12 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
+# ==============================================================================
+# SSL REVERSE PROXY & CSRF SECURITY (RENDER LIVE FIX)
+# ==============================================================================
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 CSRF_TRUSTED_ORIGINS = [
     'https://trendingnewsonline.org',
     'https://www.trendingnewsonline.org',
@@ -161,6 +167,9 @@ if RENDER_EXTERNAL_HOSTNAME:
     origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
     if origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(origin)
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 # ==============================================================================
 # BREVO REAL-TIME TRANSACTIONAL EMAIL ENGINE
