@@ -7,6 +7,9 @@ from pathlib import Path
 import os
 import dj_database_url
 from decouple import config, Csv
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,9 +79,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database: Uses Render PostgreSQL if DATABASE_URL is present, else local sqlite3
+# Database: Safely isolate DATABASE_URL
 DATABASES = {
     'default': dj_database_url.config(
+        env='DATABASE_URL',
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600
     )
@@ -107,16 +111,32 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 
-# Media files: Cloudinary Storage prevents file loss when Render sleeps
+# ==============================================================================
+# CLOUDINARY CONFIGURATION (PERSISTENT MEDIA STORAGE)
+# ==============================================================================
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='lugjxctd')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='136382786625443')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='MwOWVQWhLtvBQ8OyHd6YUcJMdB8')
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True,
+)
+
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
-    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+    'API_KEY': CLOUDINARY_API_KEY,
+    'API_SECRET': CLOUDINARY_API_SECRET,
 }
+
+# Compatibility for django-cloudinary-storage handling uploaded form files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if config('CLOUDINARY_CLOUD_NAME', default='') else "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
