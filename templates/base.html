@@ -3,11 +3,149 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}{{ site_setting.site_name|default:"Trending News" }}{% endblock %}</title>
     <!-- Font Awesome for Social Media Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        /* Modern Mobile & iOS Safe-Area Precision Styling */
+        :root {
+            --header-h: 62px;
+            --gold: #d4af37;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: var(--header-h);
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(14px, env(safe-area-inset-right));
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .bbc-menu-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 1.15rem;
+            color: #111;
+            flex-shrink: 0;
+        }
+
+        .logo-shield-wrapper {
+            display: flex;
+            align-items: center;
+            max-width: 200px;
+            min-width: 0;
+        }
+
+        .logo-shield-wrapper .brand-rect-logo {
+            max-height: 38px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Persistent Right Action Bar (Mobile + Desktop) */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .header-user-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid #111;
+            color: #111;
+            background: #fff;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .header-user-btn:hover {
+            background: #111;
+            color: #fff;
+        }
+
+        .header-user-btn.btn-register {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+
+        .header-user-btn.btn-register:hover {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #000;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none !important;
+            }
+
+            .logo-shield-wrapper {
+                max-width: 160px;
+            }
+
+            .header-user-btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .header-user-btn.btn-register {
+                display: none; /* Keep single clean Sign In button on compact mobile */
+            }
+
+            .header-user-btn span.btn-label {
+                display: inline-block;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .header-user-btn span.btn-label {
+                display: none; /* Show sleek icon-only on very narrow displays */
+            }
+            .header-user-btn {
+                padding: 7px 9px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -27,12 +165,11 @@
     </div>
     {% endif %}
 
-    <!-- Top White Header -->
+    <!-- Top Header Bar -->
     <header class="site-header">
         <div class="header-left">
             <button class="bbc-menu-toggle-btn" id="bbcMenuBtn" aria-label="Open Menu">
                 <i class="fa-solid fa-bars menu-bars-icon"></i>
-                <i class="fa-solid fa-magnifying-glass menu-search-icon"></i>
             </button>
 
             <!-- Protected Logo -->
@@ -58,27 +195,37 @@
             </div>
         </div>
 
-        <!-- Navigation Links -->
+        <!-- Desktop Category Links -->
         <nav class="desktop-nav">
             <a href="{% url 'home' %}" class="nav-link {% if not current_category %}active{% endif %}">Home</a>
             {% for cat in categories %}
                 <a href="{% url 'category_detail' cat.slug %}" class="nav-link {% if current_category == cat.slug %}active{% endif %}">{{ cat.name }}</a>
             {% endfor %}
-
-            {% if user.is_authenticated %}
-                <span class="user-greeting">Hi, {{ user.username }}</span>
-                <a href="{% url 'logout' %}" class="auth-pill">Logout</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="auth-pill">Sign In</a>
-                <a href="{% url 'register' %}" class="auth-pill" style="border-color: var(--gold); color: #000;">Register</a>
-            {% endif %}
         </nav>
+
+        <!-- Right Header Auth & Account Actions (Always Visible & Responsive) -->
+        <div class="header-right">
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="header-user-btn" title="Sign out {{ user.username }}">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span class="btn-label">Logout</span>
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="header-user-btn" aria-label="Sign In">
+                    <i class="fa-regular fa-user"></i>
+                    <span class="btn-label">Sign In</span>
+                </a>
+                <a href="{% url 'register' %}" class="header-user-btn btn-register">
+                    <span>Register</span>
+                </a>
+            {% endif %}
+        </div>
     </header>
 
     <!-- BBC Flyout Drawer Backdrop -->
     <div class="bbc-drawer-backdrop" id="drawerBackdrop"></div>
 
-    <!-- Exact BBC White Flyout Menu Drawer -->
+    <!-- BBC Flyout Menu Drawer -->
     <aside class="bbc-side-drawer" id="sideDrawer">
         <div class="drawer-header">
             <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close menu">&times;</button>
