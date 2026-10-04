@@ -113,21 +113,24 @@ STORAGES = {
 WHITENOISE_MANIFEST_STRICT = False
 
 # ==============================================================================
-# CLOUDINARY CONFIGURATION (OFFICIAL DIRECT INTEGRATION)
+# CLOUDINARY CONFIGURATION (PERSISTENT MEDIA STORAGE)
 # ==============================================================================
-CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='lugjxctd')
-CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='136382786625443')
-CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='MwOWVQWhLtvBQ80yHd6YUcJMdB8')
+CLOUDINARY_URL = config(
+    'CLOUDINARY_URL',
+    default='cloudinary://136382786625443:MwOWVQWhLtvBQ8OyHd6YUcJMdB8@lugjxctd'
+)
 
 cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET,
+    cloudinary_url=CLOUDINARY_URL,
     secure=True,
 )
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# File upload buffer limits for image streaming
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -153,9 +156,8 @@ if RENDER_EXTERNAL_HOSTNAME:
     if origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(origin)
 
-# Session persistence settings to prevent unexpected logouts on file upload
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_AGE = 86400  # 1 day in seconds
+SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
