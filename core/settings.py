@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-trendingnews-prod-key-2026-secure')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS', 
@@ -38,13 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    
-    # staticfiles MUST come before cloudinary_storage to use native collectstatic
     'django.contrib.staticfiles',
-    'cloudinary_storage',
     'cloudinary',
-    
-    # Custom news app
     'news',
 ]
 
@@ -107,16 +102,23 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# Legacy compatibility pointer for django-cloudinary-storage
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
+
 WHITENOISE_MANIFEST_STRICT = False
 
 # ==============================================================================
-# CLOUDINARY CONFIGURATION (PERSISTENT MEDIA STORAGE)
+# CLOUDINARY CONFIGURATION (OFFICIAL DIRECT INTEGRATION)
 # ==============================================================================
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='lugjxctd')
 CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='136382786625443')
-CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='MwOWVQWhLtvBQ8OyHd6YUcJMdB8')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='MwOWVQWhLtvBQ80yHd6YUcJMdB8')
 
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
@@ -124,24 +126,6 @@ cloudinary.config(
     api_secret=CLOUDINARY_API_SECRET,
     secure=True,
 )
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
-    'API_KEY': CLOUDINARY_API_KEY,
-    'API_SECRET': CLOUDINARY_API_SECRET,
-}
-
-# Compatibility for django-cloudinary-storage handling uploaded form files
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-    },
-}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
