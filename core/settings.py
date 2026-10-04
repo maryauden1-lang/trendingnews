@@ -159,9 +159,11 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'https://trendingnews-1.onrender.com',
+    'http://trendingnews-1.onrender.com',
     'https://trendingnewsonline.org',
     'https://www.trendingnewsonline.org',
-    'https://trendingnews-1.onrender.com',
 ]
 if RENDER_EXTERNAL_HOSTNAME:
     origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
@@ -170,6 +172,7 @@ if RENDER_EXTERNAL_HOSTNAME:
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False
 
 # ==============================================================================
 # BREVO REAL-TIME TRANSACTIONAL EMAIL ENGINE
