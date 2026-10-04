@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from cloudinary.models import CloudinaryField
 
 class SiteSetting(models.Model):
     site_name = models.CharField(max_length=150, default="Trending News")
-    site_logo = models.ImageField(upload_to='site_assets/', blank=True, null=True, help_text="Upload your rectangular website logo")
+    site_logo = CloudinaryField('image', folder='site_assets', blank=True, null=True, help_text="Upload your rectangular website logo")
     gmail_address = models.EmailField(blank=True, null=True, help_text="Your official Gmail address for sending notifications")
     gmail_app_password = models.CharField(max_length=200, blank=True, null=True, help_text="Google App Password (16 characters from Google Security)")
     
@@ -62,7 +63,7 @@ class Article(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
-    image = models.ImageField(upload_to='articles/%Y/%m/', blank=True, null=True)
+    image = CloudinaryField('image', folder='articles', blank=True, null=True)
     excerpt = models.TextField(max_length=300, help_text="Brief summary shown on cards")
     content = models.TextField(help_text="Full news or gossip story")
     views_count = models.PositiveIntegerField(default=0)
