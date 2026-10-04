@@ -1,5 +1,6 @@
 """
 Django settings for core project - Production Ready for Render.
+Integrated with WhiteNoise (static), Cloudinary (persistent media), and Brevo (SMTP).
 """
 
 from pathlib import Path
@@ -18,13 +19,13 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS', 
-    default='127.0.0.1,localhost,trendingnewsonline.org,www.trendingnewsonline.org', 
+    default='127.0.0.1,localhost,trendingnewsonline.org,www.trendingnewsonline.org,trendingnews-1.onrender.com', 
     cast=Csv()
 )
 
 # Render internal hostname support
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
@@ -34,7 +35,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    
+    # Cloudinary persistent media storage (must sit before staticfiles)
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     
     # Custom news app
     'news',
@@ -42,7 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Handles CSS/JS on Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,23 +98,29 @@ TIME_ZONE = 'Africa/Lagos'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files (CSS, JavaScript, Fonts)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
+WHITENOISE_MANIFEST_STRICT = False
+
+# Media files: Cloudinary Storage prevents file loss when Render sleeps
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage" if config('CLOUDINARY_CLOUD_NAME', default='') else "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-WHITENOISE_MANIFEST_STRICT = False
-
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -125,9 +136,12 @@ LOGOUT_REDIRECT_URL = 'home'
 CSRF_TRUSTED_ORIGINS = [
     'https://trendingnewsonline.org',
     'https://www.trendingnewsonline.org',
+    'https://trendingnews-1.onrender.com',
 ]
 if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+    origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # ==============================================================================
 # BREVO REAL-TIME TRANSACTIONAL EMAIL ENGINE
@@ -136,9 +150,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 10
 
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='bc314c001@smtp-brevo.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='xsmtpsib-baf7f4f5c7870dee4c8fa23b63fe2183da53b9114300daad5a467db20d935f7b-r3mIPZzDyZ35Pa5L')
 
-DEFAULT_FROM_EMAIL = 'Trending News Update <newsdesk@trendingnewsonline.org>'
-SERVER_EMAIL = 'Trending News Update <newsdesk@trendingnewsonline.org>'
+DEFAULT_FROM_EMAIL = 'Trending News <newsdesk@trendingnewsonline.org>'
+SERVER_EMAIL = 'Trending News <newsdesk@trendingnewsonline.org>'
