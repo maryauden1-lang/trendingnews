@@ -35,10 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    
-    # Cloudinary persistent media storage (must sit before staticfiles)
-    'cloudinary_storage',
     'django.contrib.staticfiles',
+    
+    # Cloudinary persistent media storage
+    'cloudinary_storage',
     'cloudinary',
     
     # Custom news app
@@ -103,6 +103,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
+# Legacy compatibility setting required by django-cloudinary-storage
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 
 # Media files: Cloudinary Storage prevents file loss when Render sleeps
