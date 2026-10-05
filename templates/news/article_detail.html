@@ -28,6 +28,34 @@
 {% else %}
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
 {% endif %}
+
+<!-- Google Structured Data (NewsArticle Schema for Google Search & Google News) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "{{ article.title|escapejs }}",
+  "image": [
+    {% if article.image %}"{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}"{% else %}"{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}"{% endif %}
+  ],
+  "datePublished": "{{ article.created_at|date:'c' }}",
+  "dateModified": "{{ article.created_at|date:'c' }}",
+  "author": [{
+      "@type": "Organization",
+      "name": "{{ site_setting.site_name|default:'Trending News' }}",
+      "url": "https://trendingnewsonline.org"
+  }],
+  "publisher": {
+      "@type": "Organization",
+      "name": "{{ site_setting.site_name|default:'Trending News' }}",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://trendingnewsonline.org{% static 'image/trending-news-favicon.png' %}"
+      }
+  },
+  "description": "{{ article.excerpt|default:article.title|striptags|escapejs }}"
+}
+</script>
 {% endblock %}
 
 {% block content %}
