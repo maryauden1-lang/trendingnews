@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'news.context_processors.common_site_data',
             ],
         },
     },
@@ -166,13 +167,14 @@ CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = False
 
 # ==============================================================================
-# BREVO REAL-TIME TRANSACTIONAL EMAIL ENGINE
+# BREVO REAL-TIME TRANSACTIONAL EMAIL ENGINE (PORT 587 - TLS)
 # ==============================================================================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_TIMEOUT = 10
+EMAIL_USE_SSL = False
+EMAIL_TIMEOUT = 25
 
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='bc314c001@smtp-brevo.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='xsmtpsib-baf7f4f5c7870dee4c8fa23b63fe2183da53b9114300daad5a467db20d935f7b-r3mIPZzDyZ35Pa5L')
