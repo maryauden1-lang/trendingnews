@@ -6,6 +6,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.http import HttpResponse
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
 from .emails import send_welcome_email
 
@@ -231,3 +233,18 @@ def user_logout(request):
     auth_logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('home')
+
+
+def test_email_view(request):
+    """Direct diagnostic view to verify Brevo SMTP on Render."""
+    try:
+        send_mail(
+            subject='Brevo Test from Trending News',
+            message='If you are reading this, Brevo SMTP is working on Render!',
+            from_email='Trending News Update <newsupdate@trendingnewsonline.org>',
+            recipient_list=['newsupdate@trendingnewsonline.org'],
+            fail_silently=False,
+        )
+        return HttpResponse("<h2 style='color:green;'>SUCCESS: Email sent via Brevo! Check your inbox or spam.</h2>")
+    except Exception as e:
+        return HttpResponse(f"<h2 style='color:red;'>FAILED: Brevo Error</h2><pre>{str(e)}</pre>")
