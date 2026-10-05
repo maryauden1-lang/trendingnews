@@ -3,6 +3,7 @@ from django.urls import path, re_path, include
 from django.conf import settings
 from django.views.static import serve
 from django.contrib.auth import views as auth_views
+from news.forms import BrevoPasswordResetForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -12,16 +13,13 @@ urlpatterns = [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 
     # ==============================================================================
-    # PASSWORD RESET WORKFLOW (BREVO REAL-TIME SMTP)
+    # PASSWORD RESET WORKFLOW (BREVO HTTPS REST API)
     # ==============================================================================
     path(
         'password-reset/', 
         auth_views.PasswordResetView.as_view(
+            form_class=BrevoPasswordResetForm,
             template_name='registration/password_reset_form.html',
-            email_template_name='registration/password_reset_email.txt',
-            html_email_template_name='registration/password_reset_email.html',
-            subject_template_name='registration/password_reset_subject.txt',
-            from_email='Trending News Update <newsupdate@trendingnewsonline.org>',
             success_url='/password-reset/done/'
         ), 
         name='password_reset'
