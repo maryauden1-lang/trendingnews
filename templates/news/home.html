@@ -38,7 +38,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
         gap: 20px;
-        margin-bottom: 35px;
+        margin-bottom: 20px;
     }
 
     /* Card Architecture */
@@ -125,7 +125,59 @@
         flex-grow: 1;
     }
 
-    /* 3. Mobile Touch Swipe Configuration */
+    /* 3. BBC-Style Pagination Controls */
+    .bbc-pagination-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 25px 0 35px 0;
+    }
+
+    .bbc-pagination-list {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .bbc-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        font-size: 0.92rem;
+        font-weight: 800;
+        text-decoration: none;
+        color: #111111;
+        background: #ffffff;
+        border: 2px solid #111111;
+        border-radius: 2px;
+        transition: all 0.2s ease;
+    }
+
+    .bbc-page-btn:hover {
+        background: #111111;
+        color: #ffffff;
+    }
+
+    .bbc-page-btn.active {
+        background: #bb1919;
+        border-color: #bb1919;
+        color: #ffffff;
+        pointer-events: none;
+    }
+
+    .bbc-page-btn.nav-step {
+        padding: 0 16px;
+    }
+
+    /* 4. Mobile Touch Swipe Configuration */
     @media (max-width: 768px) {
         .hero-section-grid {
             grid-template-columns: 1fr !important;
@@ -146,15 +198,15 @@
             gap: 14px;
             margin-left: -15px;
             margin-right: -15px;
-            scrollbar-width: none; /* Hide default scrollbar on Firefox */
+            scrollbar-width: none;
         }
 
         .bbc-swipe-track::-webkit-scrollbar {
-            display: none; /* Hide scrollbar on Chrome, Safari, iOS */
+            display: none;
         }
 
         .bbc-card {
-            flex: 0 0 82%; /* Shows 82% of current card with next card peeking */
+            flex: 0 0 82%;
             max-width: 320px;
             scroll-snap-align: start;
         }
@@ -287,7 +339,7 @@
                         </div>
                         
                         <h3 class="bbc-card-title">
-                            <a href="{% url 'article_detail' article.slug %}">
+                            <a href="{% url 'article_detail' article.slug %}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                 {{ article.title }}
                             </a>
                         </h3>
@@ -305,6 +357,37 @@
                 </article>
                 {% endfor %}
             </div>
+
+            <!-- 3. BBC-Style Pagination Controls -->
+            {% if page_obj.has_other_pages %}
+            <div class="bbc-pagination-wrap">
+                <ul class="bbc-pagination-list">
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}" class="bbc-page-btn nav-step">
+                                &larr; Previous
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li><span class="bbc-page-btn active">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?page={{ num }}" class="bbc-page-btn">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}" class="bbc-page-btn nav-step">
+                                Next &rarr;
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
         {% endif %}
 
     {% else %}
