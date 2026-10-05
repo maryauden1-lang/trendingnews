@@ -15,9 +15,8 @@ class SiteSetting(models.Model):
         help_text="Upload your rectangular website logo"
     )
     gmail_address = models.EmailField(blank=True, null=True, help_text="Your official Gmail address for sending notifications")
-    gmail_app_password = models.CharField(max_length=200, blank=True, null=True, help_text="Google App Password (16 characters from Google Security)")
+    gmail_app_password = models.CharField(max_length=200, blank=True, null=True, help_text="Google App Password")
     
-    # Social Media URL Handles (Admin Configurable)
     x_url = models.URLField(blank=True, null=True, default="https://x.com", help_text="X / Twitter Page Link")
     facebook_url = models.URLField(blank=True, null=True, default="https://facebook.com", help_text="Facebook Page Link")
     instagram_url = models.URLField(blank=True, null=True, default="https://instagram.com", help_text="Instagram Page Link")
@@ -94,6 +93,7 @@ class Article(models.Model):
         return self.likes.count()
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
         if not self.slug:
             base_slug = slugify(self.title)
             slug = base_slug
@@ -103,6 +103,14 @@ class Article(models.Model):
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
+
+        # Trigger automatic notification to all subscribers only on newly created articles
+        if is_new:
+            try:
+                from .emails import send_new_article_alert
+                send_new_article_alert(self)
+            except Exception as e:
+                print(f"[ARTICLE EMAIL ALERT ERROR]: {e}")
 
     def __str__(self):
         return self.title

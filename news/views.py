@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
+from .emails import send_welcome_email
 
 
 def get_common_context():
@@ -151,12 +152,13 @@ def add_comment(request, slug):
 def subscribe(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
-        if email:
+        if email and '@' in email:
             if Subscriber.objects.filter(email=email).exists():
                 messages.info(request, "You are already subscribed to Trending News!")
             else:
                 Subscriber.objects.create(email=email)
-                messages.success(request, "Welcome! You are now subscribed to our news desk.")
+                send_welcome_email(email)
+                messages.success(request, "Welcome! A confirmation email has been sent to your inbox.")
         else:
             messages.info(request, "Please enter a valid email address.")
     return redirect('home')
@@ -172,7 +174,6 @@ def user_register(request):
         password = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')
 
-        # Fallback check in case the HTML template used password_2 or confirm
         if not confirm_password:
             confirm_password = request.POST.get('password_confirm', '') or request.POST.get('password_2', '')
 
