@@ -1,5 +1,6 @@
 import json
 import urllib.request
+import traceback
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -34,7 +35,6 @@ def get_common_context():
 def home(request):
     all_articles = list(Article.objects.all())
     
-    # Feature Grid split: 1 Lead Story, up to 3 Side Stories, remainder in grid
     featured_lead = all_articles[0] if len(all_articles) > 0 else None
     featured_sub = all_articles[1:4] if len(all_articles) > 1 else []
     remaining_articles = all_articles[4:] if len(all_articles) > 4 else []
@@ -75,13 +75,11 @@ def article_detail(request, slug):
     article.views_count += 1
     article.save(update_fields=['views_count'])
 
-    # Related stories engine: 3 articles from the same category excluding this one
     related_articles = Article.objects.filter(category=article.category).exclude(id=article.id)[:3]
     if len(related_articles) < 3:
         fallback = Article.objects.exclude(id=article.id).exclude(id__in=[r.id for r in related_articles])[:3 - len(related_articles)]
         related_articles = list(related_articles) + list(fallback)
 
-    # Word count and reading time estimate (approx 200 wpm)
     word_count = len(article.content.split())
     reading_time = max(1, round(word_count / 200))
 
@@ -241,46 +239,54 @@ def user_logout(request):
 
 
 def password_reset_request_view(request):
-    """Handles password reset request with site context and Brevo HTTPS dispatch."""
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip().lower()
-        users = User.objects.filter(email__iexact=email, is_active=True)
-        domain = request.get_host()
-        protocol = 'https' if request.is_secure() else 'http'
+    """Direct password reset view with built-in error diagnostics."""
+    try:
+        if request.method == 'POST':
+            email = request.POST.get('email', '').strip().lower()
+            users = User.objects.filter(email__iexact=email, is_active=True)
+            domain = request.get_host()
+            protocol = 'https' if request.is_secure() else 'http'
 
-        for user in users:
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            reset_url = f"{protocol}://{domain}/password-reset-confirm/{uid}/{token}/"
+            for user in users:
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                reset_url = f"{protocol}://{domain}/password-reset-confirm/{uid}/{token}/"
 
-            subject = "Password Reset Request — Trending News"
-            text_content = f"Hello {user.username},\n\nClick the link below to reset your password:\n{reset_url}\n\nIf you did not make this request, you can ignore this email."
-            html_content = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #bb1919; margin-top: 0;">TRENDING NEWS</h2>
-                <p>Hello <strong>{user.username}</strong>,</p>
-                <p>We received a request to reset your password. Click the button below to continue:</p>
-                <div style="margin: 24px 0;">
-                    <a href="{reset_url}" style="background: #bb1919; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">
-                        Reset Password
-                    </a>
+                subject = "Password Reset Request — Trending News"
+                text_content = f"Hello {user.username},\n\nClick the link below to reset your password:\n{reset_url}\n\nIf you did not make this request, you can ignore this email."
+                html_content = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <h2 style="color: #bb1919; margin-top: 0;">TRENDING NEWS</h2>
+                    <p>Hello <strong>{user.username}</strong>,</p>
+                    <p>We received a request to reset your password. Click the button below to continue:</p>
+                    <div style="margin: 24px 0;">
+                        <a href="{reset_url}" style="background: #bb1919; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="font-size: 13px; color: #64748b;">Or copy and paste this link in your browser:<br><a href="{reset_url}">{reset_url}</a></p>
+                    <p style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px;">If you didn't request this, you can safely ignore this email.</p>
                 </div>
-                <p style="font-size: 13px; color: #64748b;">Or copy and paste this link in your browser:<br><a href="{reset_url}">{reset_url}</a></p>
-                <p style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px;">If you didn't request this, you can safely ignore this email.</p>
-            </div>
-            """
-            _send_async_mail(subject, text_content, html_content, [user.email])
+                """
+                _send_async_mail(subject, text_content, html_content, [user.email])
 
-        return redirect('password_reset_done')
+            return redirect('password_reset_done')
 
-    context = get_common_context()
-    return render(request, 'registration/password_reset_form.html', context)
+        context = get_common_context()
+        return render(request, 'registration/password_reset_form.html', context)
+    except Exception as e:
+        tb = traceback.format_exc()
+        return HttpResponse(f"<h2 style='color:red;'>PASSWORD RESET DIAGNOSTIC ERROR:</h2><pre>{tb}</pre>", status=200)
 
 
 def password_reset_done_view(request):
     """Displays check-your-inbox screen with full site context."""
-    context = get_common_context()
-    return render(request, 'registration/password_reset_done.html', context)
+    try:
+        context = get_common_context()
+        return render(request, 'registration/password_reset_done.html', context)
+    except Exception as e:
+        tb = traceback.format_exc()
+        return HttpResponse(f"<h2 style='color:red;'>PASSWORD RESET DONE DIAGNOSTIC:</h2><pre>{tb}</pre>", status=200)
 
 
 def test_email_view(request):
