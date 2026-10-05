@@ -177,5 +177,5 @@ EMAIL_TIMEOUT = 10
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='bc314c001@smtp-brevo.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='xsmtpsib-baf7f4f5c7870dee4c8fa23b63fe2183da53b9114300daad5a467db20d935f7b-r3mIPZzDyZ35Pa5L')
 
-DEFAULT_FROM_EMAIL = 'Trending News <newsdesk@trendingnewsonline.org>'
-SERVER_EMAIL = 'Trending News <newsdesk@trendingnewsonline.org>'
+DEFAULT_FROM_EMAIL = 'Trending News Update <newsupdate@trendingnewsonline.org>'
+SERVER_EMAIL = 'Trending News Update <newsupdate@trendingnewsonline.org>'
