@@ -8,7 +8,6 @@ urlpatterns = [
     path('legal/<slug:slug>/', views.legal_detail, name='legal_detail'),
     path('article/<slug:slug>/like/', views.like_article, name='like_article'),
     path('article/<slug:slug>/comment/', views.add_comment, name='add_comment'),
-    path('test-email/', views.test_email_view, name='test_email'),
     path('search/', views.search, name='search'),
     path('subscribe/', views.subscribe, name='subscribe'),
     path('register/', views.user_register, name='register'),

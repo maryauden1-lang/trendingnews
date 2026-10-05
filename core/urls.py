@@ -12,9 +12,7 @@ urlpatterns = [
     # Media files route fallback
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 
-    # ==============================================================================
-    # PASSWORD RESET WORKFLOW (BREVO HTTPS REST API + FULL CONTEXT)
-    # ==============================================================================
+    # Password Reset Flow (Brevo HTTPS REST API)
     path('password-reset/', news_views.password_reset_request_view, name='password_reset'),
     path('password-reset/done/', news_views.password_reset_done_view, name='password_reset_done'),
     path(
