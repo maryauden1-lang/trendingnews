@@ -4,7 +4,6 @@ from django.conf import settings
 from django.views.static import serve
 from django.views.generic.base import RedirectView, TemplateView
 from django.contrib.staticfiles.storage import staticfiles_storage
-from django.contrib.sitemaps.views import sitemap
 from django.contrib.auth import views as auth_views
 from news import views as news_views
 from news.sitemaps import ArticleSitemap, CategorySitemap, StaticViewSitemap
@@ -19,8 +18,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('news.urls')),
 
-    # SEO: Sitemap and Robots.txt
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    # SEO: Sitemap and Robots.txt (Served through custom view to strip blocking headers)
+    path('sitemap.xml', news_views.custom_sitemap_view, {'sitemaps': sitemaps}, name='sitemap'),
     path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 
     # Direct browser root /favicon.ico request redirect

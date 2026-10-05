@@ -7,9 +7,11 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
+from django.contrib.sitemaps.views import sitemap as django_sitemap
 from django.db.models import Q
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.views.decorators.http import require_GET
 
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
 from .emails import send_welcome_email, _send_async_mail
@@ -302,3 +304,14 @@ def password_reset_done_view(request):
     """Displays check-your-inbox screen with full site context."""
     context = get_common_context()
     return render(request, 'registration/password_reset_done.html', context)
+
+
+@require_GET
+def custom_sitemap_view(request, sitemaps):
+    """Custom sitemap view to strip noindex headers and enforce XML content-type."""
+    response = django_sitemap(request, sitemaps=sitemaps)
+    if response.has_header('X-Robots-Tag'):
+        del response['X-Robots-Tag']
+    response['X-Robots-Tag'] = 'all'
+    response['Content-Type'] = 'application/xml; charset=utf-8'
+    return response
