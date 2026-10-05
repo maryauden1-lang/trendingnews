@@ -7,8 +7,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
-from django.contrib.sitemaps.views import sitemap as django_sitemap
 from django.db.models import Q
+from django.http import HttpResponse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.views.decorators.http import require_GET
@@ -308,10 +308,54 @@ def password_reset_done_view(request):
 
 @require_GET
 def custom_sitemap_view(request, sitemaps):
-    """Custom sitemap view to enforce standard XML schema and strip noindex."""
-    response = django_sitemap(request, sitemaps=sitemaps, template_name='sitemap.xml')
-    if response.has_header('X-Robots-Tag'):
-        del response['X-Robots-Tag']
+    """Generates standard, strictly valid sitemap XML with full namespace for Google Search Console."""
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+
+    domain = request.get_host()
+    protocol = 'https'
+
+    for section, site in sitemaps.items():
+        if callable(site):
+            site_instance = site()
+        else:
+            site_instance = site
+
+        for item in site_instance.items():
+            if hasattr(site_instance, 'location'):
+                loc = site_instance.location(item)
+            elif hasattr(item, 'get_absolute_url'):
+                loc = item.get_absolute_url()
+            else:
+                loc = str(item)
+
+            if not loc.startswith('http'):
+                loc = f"{protocol}://{domain}{loc}"
+
+            xml_lines.append('  <url>')
+            xml_lines.append(f'    <loc>{loc}</loc>')
+
+            if hasattr(site_instance, 'lastmod'):
+                lastmod_val = site_instance.lastmod(item)
+                if lastmod_val:
+                    xml_lines.append(f'    <lastmod>{lastmod_val.strftime("%Y-%m-%d")}</lastmod>')
+
+            if hasattr(site_instance, 'changefreq'):
+                freq = site_instance.changefreq(item) if callable(site_instance.changefreq) else site_instance.changefreq
+                if freq:
+                    xml_lines.append(f'    <changefreq>{freq}</changefreq>')
+
+            if hasattr(site_instance, 'priority'):
+                prio = site_instance.priority(item) if callable(site_instance.priority) else site_instance.priority
+                if prio is not None:
+                    xml_lines.append(f'    <priority>{prio}</priority>')
+
+            xml_lines.append('  </url>')
+
+    xml_lines.append('</urlset>')
+
+    response = HttpResponse('\n'.join(xml_lines), content_type='application/xml; charset=utf-8')
     response['X-Robots-Tag'] = 'all'
-    response['Content-Type'] = 'application/xml; charset=utf-8'
     return response
