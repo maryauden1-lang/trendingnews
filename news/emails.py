@@ -1,23 +1,53 @@
+import json
+import urllib.request
 import threading
-from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_API_KEY = "xsmtpsib-baf7f4f5c7870dee4c8fa23b63fe2183da53b9114300daad5a467db20d935f7b-r3mIPZzDyZ35Pa5L"
+SENDER_NAME = "Trending News Update"
+SENDER_EMAIL = "newsupdate@trendingnewsonline.org"
+
+
 def _send_async_mail(subject, text_content, html_content, to_list):
-    """Sends emails in a background thread and logs any SMTP errors to Render console."""
+    """
+    Sends emails in a background thread using Brevo's HTTPS API.
+    Bypasses Render's outbound SMTP socket blocks completely.
+    """
     def _worker():
-        try:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Trending News Update <newsupdate@trendingnewsonline.org>')
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=from_email,
-                to=to_list
+        for recipient in to_list:
+            payload = {
+                "sender": {
+                    "name": SENDER_NAME,
+                    "email": SENDER_EMAIL
+                },
+                "to": [
+                    {"email": recipient}
+                ],
+                "subject": subject,
+                "htmlContent": html_content,
+                "textContent": text_content,
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                BREVO_API_URL,
+                data=data,
+                headers={
+                    "accept": "application/json",
+                    "api-key": BREVO_API_KEY,
+                    "content-type": "application/json",
+                },
+                method="POST",
             )
-            msg.attach_alternative(html_content, "text/html")
-            msg.send(fail_silently=False)
-            print(f"[EMAIL SUCCESS]: Dispatched to {to_list}")
-        except Exception as e:
-            print(f"!!! [BREVO EMAIL FAILED] !!! -> Error: {str(e)}")
+            try:
+                with urllib.request.urlopen(req, timeout=15) as response:
+                    res_body = response.read().decode("utf-8")
+                    print(f"[BREVO API SUCCESS] Sent to {recipient}: {res_body}")
+            except urllib.error.HTTPError as e:
+                err_detail = e.read().decode("utf-8")
+                print(f"!!! [BREVO API ERROR {e.code}] !!! -> {err_detail}")
+            except Exception as e:
+                print(f"!!! [BREVO API FAILED] !!! -> Error: {str(e)}")
 
     t = threading.Thread(target=_worker)
     t.start()
@@ -161,5 +191,4 @@ def send_new_article_alert(article):
     """
     text_content = f"{article.title}\n\nCategory: {article.category.name}\n\n{article.excerpt}\n\nRead here: {article_url}"
 
-    for email in subscribers:
-        _send_async_mail(subject, text_content, html_content, [email])
+    _send_async_mail(subject, text_content, html_content, subscribers)

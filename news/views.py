@@ -1,3 +1,5 @@
+import json
+import urllib.request
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -6,10 +8,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.core.mail import send_mail
 from django.http import HttpResponse
+
 from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
-from .emails import send_welcome_email
+from .emails import send_welcome_email, BREVO_API_KEY, SENDER_NAME, SENDER_EMAIL
 
 
 def get_common_context():
@@ -236,15 +238,30 @@ def user_logout(request):
 
 
 def test_email_view(request):
-    """Direct diagnostic view to verify Brevo SMTP on Render."""
+    """Direct diagnostic view using Brevo HTTPS REST API (Port 443 - Never blocked on Render)."""
+    payload = {
+        "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
+        "to": [{"email": "newsupdate@trendingnewsonline.org", "name": "Admin"}],
+        "subject": "Brevo HTTPS API Connection Test",
+        "htmlContent": "<h3>Success! The Brevo HTTPS API connected and dispatched through Render!</h3>",
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=data,
+        headers={
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
     try:
-        send_mail(
-            subject='Brevo Test from Trending News',
-            message='If you are reading this, Brevo SMTP is working on Render!',
-            from_email='Trending News Update <newsupdate@trendingnewsonline.org>',
-            recipient_list=['newsupdate@trendingnewsonline.org'],
-            fail_silently=False,
-        )
-        return HttpResponse("<h2 style='color:green;'>SUCCESS: Email sent via Brevo! Check your inbox or spam.</h2>")
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res_body = response.read().decode("utf-8")
+            return HttpResponse(f"<h2 style='color:green;'>SUCCESS: Brevo HTTPS API connected!</h2><pre>{res_body}</pre>")
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode("utf-8")
+        return HttpResponse(f"<h2 style='color:red;'>BREVO API ERROR ({e.code})</h2><pre>{err_msg}</pre>")
     except Exception as e:
-        return HttpResponse(f"<h2 style='color:red;'>FAILED: Brevo Error</h2><pre>{str(e)}</pre>")
+        return HttpResponse(f"<h2 style='color:red;'>FAILED:</h2><pre>{str(e)}</pre>")
