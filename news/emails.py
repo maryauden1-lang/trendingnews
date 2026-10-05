@@ -4,15 +4,15 @@ import threading
 from django.conf import settings
 
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
-BREVO_API_KEY = "xsmtpsib-baf7f4f5c7870dee4c8fa23b63fe2183da53b9114300daad5a467db20d935f7b-r3mIPZzDyZ35Pa5L"
+BREVO_API_KEY = "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"
 SENDER_NAME = "Trending News Update"
 SENDER_EMAIL = "newsupdate@trendingnewsonline.org"
 
 
 def _send_async_mail(subject, text_content, html_content, to_list):
     """
-    Sends emails in a background thread using Brevo's HTTPS API.
-    Bypasses Render's outbound SMTP socket blocks completely.
+    Sends emails in a background thread using Brevo's HTTPS REST API.
+    Bypasses Render's outbound SMTP socket restrictions completely.
     """
     def _worker():
         for recipient in to_list:
