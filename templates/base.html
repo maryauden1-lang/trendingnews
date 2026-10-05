@@ -6,6 +6,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}{{ site_setting.site_name|default:"Trending News" }}{% endblock %}</title>
 
+    <!-- Base SEO & Open Graph Social Meta Tags (Fallback) -->
+    {% block social_meta %}
+    <meta name="description" content="{{ site_setting.site_description|default:'Trending News delivers breaking news, politics, entertainment, and insightful reporting from around the world.' }}">
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_setting.site_name|default:'Trending News' }}">
+    <meta property="og:title" content="{{ site_setting.site_name|default:'Trending News' }}">
+    <meta property="og:description" content="{{ site_setting.site_description|default:'Your trusted source for verified news, crime alerts, politics, and top headlines.' }}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    {% if site_setting.site_logo %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_setting.site_logo.url }}">
+    {% else %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
+    {% endif %}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ site_setting.site_name|default:'Trending News' }}">
+    <meta name="twitter:description" content="{{ site_setting.site_description|default:'Your trusted source for verified news, crime alerts, politics, and top headlines.' }}">
+    {% if site_setting.site_logo %}
+        <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_setting.site_logo.url }}">
+    {% else %}
+        <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
+    {% endif %}
+    {% endblock %}
+
     <!-- Trending News Favicons -->
     <link rel="icon" type="image/png" sizes="64x64" href="{% static 'image/trending-news-favicon.png' %}">
     <link rel="shortcut icon" href="{% static 'image/trending-news-favicon.png' %}">
@@ -135,7 +162,7 @@
             }
 
             .header-user-btn.btn-register {
-                display: none; /* Keep single clean Sign In button on compact mobile */
+                display: none;
             }
 
             .header-user-btn span.btn-label {
@@ -145,7 +172,7 @@
 
         @media (max-width: 380px) {
             .header-user-btn span.btn-label {
-                display: none; /* Show sleek icon-only on very narrow displays */
+                display: none;
             }
             .header-user-btn {
                 padding: 7px 9px;
@@ -209,7 +236,7 @@
             {% endfor %}
         </nav>
 
-        <!-- Right Header Auth & Account Actions (Always Visible & Responsive) -->
+        <!-- Right Header Auth & Account Actions -->
         <div class="header-right">
             {% if user.is_authenticated %}
                 <a href="{% url 'logout' %}" class="header-user-btn" title="Sign out {{ user.username }}">

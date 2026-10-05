@@ -1,6 +1,34 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ article.title }} - {{ site_setting.site_name|default:"Trending News" }}{% endblock %}
+
+{% block social_meta %}
+<!-- Specific Article Social Share Cards (WhatsApp, Facebook, X, Telegram) -->
+<meta name="description" content="{{ article.excerpt|default:article.title|striptags }}">
+
+<!-- Open Graph / Facebook / WhatsApp -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="{{ site_setting.site_name|default:'Trending News' }}">
+<meta property="og:title" content="{{ article.title }}">
+<meta property="og:description" content="{{ article.excerpt|default:article.title|striptags }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% if article.image %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}">
+{% else %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
+{% endif %}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ article.title }}">
+<meta name="twitter:description" content="{{ article.excerpt|default:article.title|striptags }}">
+{% if article.image %}
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}">
+{% else %}
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 880px; padding-top: 30px; padding-bottom: 60px;">
@@ -26,7 +54,7 @@
             Published on <strong style="color: #000000;">{{ article.created_at|date:"F d, Y &bull; h:i A" }}</strong> &bull; {{ article.views_count }} Reads
         </div>
 
-        <!-- 2. NATIVE SOCIAL SHARE TOOLBAR -->
+        <!-- Native Social Share Toolbar -->
         <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0 25px; flex-wrap: wrap;">
             <span style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: #000000; margin-right: 5px;">Share:</span>
             
@@ -86,7 +114,7 @@
             {% endif %}
         </div>
 
-        <!-- 3. AUTOMATED RELATED STORIES ENGINE -->
+        <!-- Automated Related Stories Engine -->
         {% if related_articles %}
         <div style="margin-top: 45px; border-top: 2px solid #000000; padding-top: 24px;">
             <h3 style="font-size: 1.35rem; font-weight: 900; color: #000000; margin-bottom: 18px; text-transform: uppercase; letter-spacing: 0.5px;">
