@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /password-reset/
+Disallow: /password-reset-done/
+Disallow: /password-reset-confirm/
+Disallow: /password-reset-complete/
+Disallow: /login/
+Disallow: /register/
+Disallow: /logout/
+Disallow: /article/*/like/
+Disallow: /article/*/comment/
+
+Sitemap: https://trendingnewsonline.org/sitemap.xml

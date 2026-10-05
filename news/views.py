@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.utils.http import urlsafe_base64_encode
@@ -29,18 +30,32 @@ def get_common_context():
 
 
 def home(request):
-    all_articles = list(Article.objects.all())
+    all_articles = Article.objects.all()
     
-    featured_lead = all_articles[0] if len(all_articles) > 0 else None
-    featured_sub = all_articles[1:4] if len(all_articles) > 1 else []
-    remaining_articles = all_articles[4:] if len(all_articles) > 4 else []
+    # 1 featured lead story, 3 top side stories
+    featured_lead = all_articles.first() if all_articles.exists() else None
+    featured_sub = list(all_articles[1:4]) if all_articles.count() > 1 else []
+    
+    # Remaining articles get paginated (8 per page)
+    remaining_qs = all_articles[4:] if all_articles.count() > 4 else Article.objects.none()
+    
+    page = request.GET.get('page', 1)
+    paginator = Paginator(remaining_qs, 8)
+    
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     context = get_common_context()
     context.update({
         'featured_lead': featured_lead,
         'featured_sub': featured_sub,
-        'remaining_articles': remaining_articles,
-        'has_articles': len(all_articles) > 0,
+        'remaining_articles': page_obj.object_list,
+        'page_obj': page_obj,
+        'has_articles': all_articles.exists(),
         'current_category': None,
     })
     return render(request, 'news/home.html', context)
@@ -48,11 +63,22 @@ def home(request):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug)
-    articles = list(Article.objects.filter(category=category))
+    articles = Article.objects.filter(category=category)
     
-    featured_lead = articles[0] if len(articles) > 0 else None
-    featured_sub = articles[1:4] if len(articles) > 1 else []
-    remaining_articles = articles[4:] if len(articles) > 4 else []
+    featured_lead = articles.first() if articles.exists() else None
+    featured_sub = list(articles[1:4]) if articles.count() > 1 else []
+    
+    remaining_qs = articles[4:] if articles.count() > 4 else Article.objects.none()
+    
+    page = request.GET.get('page', 1)
+    paginator = Paginator(remaining_qs, 8)
+    
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     context = get_common_context()
     context.update({
@@ -60,8 +86,9 @@ def category_detail(request, slug):
         'current_category': category.slug,
         'featured_lead': featured_lead,
         'featured_sub': featured_sub,
-        'remaining_articles': remaining_articles,
-        'has_articles': len(articles) > 0,
+        'remaining_articles': page_obj.object_list,
+        'page_obj': page_obj,
+        'has_articles': articles.exists(),
     })
     return render(request, 'news/home.html', context)
 
