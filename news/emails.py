@@ -1,22 +1,26 @@
 import threading
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
-from django.utils.html import strip_tags
 
 def _send_async_mail(subject, text_content, html_content, to_list):
-    """Sends emails in a background thread so the UI never lags or freezes."""
-    try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Trending News <newsdesk@trendingnewsonline.org>')
-        msg = EmailMultiAlternatives(
-            subject=subject,
-            body=text_content,
-            from_email=from_email,
-            to=to_list
-        )
-        msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=True)
-    except Exception as e:
-        print(f"[EMAIL ERROR]: {e}")
+    """Sends emails in a background thread and logs any SMTP errors to Render console."""
+    def _worker():
+        try:
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Trending News Update <newsupdate@trendingnewsonline.org>')
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=from_email,
+                to=to_list
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=False)
+            print(f"[EMAIL SUCCESS]: Dispatched to {to_list}")
+        except Exception as e:
+            print(f"!!! [BREVO EMAIL FAILED] !!! -> Error: {str(e)}")
+
+    t = threading.Thread(target=_worker)
+    t.start()
 
 
 def send_welcome_email(recipient_email):
@@ -34,15 +38,12 @@ def send_welcome_email(recipient_email):
         body {{ margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }}
         .container {{ max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }}
         .header {{ background-color: #bb1919; padding: 28px 24px; text-align: center; }}
-        .logo-wrap {{ display: inline-flex; align-items: center; justify-content: center; }}
-        .site-title {{ color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; text-decoration: none; text-transform: uppercase; }}
-        .badge {{ margin-left: 8px; vertical-align: middle; }}
         .content {{ padding: 36px 28px; color: #1f2937; line-height: 1.65; }}
         .greeting {{ font-size: 22px; font-weight: 700; color: #111827; margin-top: 0; margin-bottom: 14px; }}
         .intro-p {{ font-size: 15px; color: #4b5563; margin-bottom: 20px; }}
         .highlight-box {{ background-color: #f9fafb; border-left: 4px solid #bb1919; padding: 16px 18px; border-radius: 4px; margin: 24px 0; font-size: 14px; color: #374151; }}
         .btn-wrapper {{ text-align: center; margin: 32px 0 20px 0; }}
-        .btn {{ display: inline-block; background-color: #bb1919; color: #ffffff !important; padding: 14px 32px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 15px; letter-spacing: 0.3px; }}
+        .btn {{ display: inline-block; background-color: #bb1919; color: #ffffff !important; padding: 14px 32px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 15px; }}
         .footer {{ background-color: #f9fafb; padding: 22px 24px; text-align: center; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }}
       </style>
     </head>
@@ -83,10 +84,9 @@ def send_welcome_email(recipient_email):
     </body>
     </html>
     """
-    text_content = f"Welcome to Trending News!\n\nYour subscription is confirmed for {recipient_email}. You will now receive verified news alerts directly from our desk.\n\nVisit: https://trendingnewsonline.org/"
+    text_content = f"Welcome to Trending News!\n\nYour subscription is confirmed for {recipient_email}.\n\nVisit: https://trendingnewsonline.org/"
     
-    t = threading.Thread(target=_send_async_mail, args=(subject, text_content, html_content, [recipient_email]))
-    t.start()
+    _send_async_mail(subject, text_content, html_content, [recipient_email])
 
 
 def send_new_article_alert(article):
@@ -121,8 +121,6 @@ def send_new_article_alert(article):
         body {{ margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }}
         .container {{ max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }}
         .header {{ background-color: #bb1919; padding: 20px 24px; text-align: center; }}
-        .site-title {{ color: #ffffff; font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0; }}
-        .badge {{ margin-left: 6px; vertical-align: middle; }}
         .content {{ padding: 30px 24px; color: #1f2937; }}
         .tag {{ display: inline-block; background-color: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px; }}
         .headline {{ font-size: 22px; font-weight: 800; line-height: 1.35; color: #111827; margin: 0 0 16px 0; }}
@@ -163,10 +161,5 @@ def send_new_article_alert(article):
     """
     text_content = f"{article.title}\n\nCategory: {article.category.name}\n\n{article.excerpt}\n\nRead here: {article_url}"
 
-    # Sends in batches of 40 to stay well within SMTP connection limits
-    def _dispatch_all():
-        for email in subscribers:
-            _send_async_mail(subject, text_content, html_content, [email])
-
-    t = threading.Thread(target=_dispatch_all)
-    t.start()
+    for email in subscribers:
+        _send_async_mail(subject, text_content, html_content, [email])
