@@ -308,8 +308,8 @@ def password_reset_done_view(request):
 
 @require_GET
 def custom_sitemap_view(request, sitemaps):
-    """Custom sitemap view to strip noindex headers and enforce XML content-type."""
-    response = django_sitemap(request, sitemaps=sitemaps)
+    """Custom sitemap view to enforce standard XML schema and strip noindex."""
+    response = django_sitemap(request, sitemaps=sitemaps, template_name='sitemap.xml')
     if response.has_header('X-Robots-Tag'):
         del response['X-Robots-Tag']
     response['X-Robots-Tag'] = 'all'
