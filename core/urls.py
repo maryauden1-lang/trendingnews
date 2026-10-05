@@ -2,12 +2,20 @@ from django.contrib import admin
 from django.urls import path, re_path, include
 from django.conf import settings
 from django.views.static import serve
+from django.views.generic.base import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.contrib.auth import views as auth_views
 from news import views as news_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('news.urls')),
+
+    # Direct browser root /favicon.ico request redirect
+    path(
+        'favicon.ico',
+        RedirectView.as_view(url=staticfiles_storage.url('image/trending-news-favicon.png')),
+    ),
 
     # Media files route fallback
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),

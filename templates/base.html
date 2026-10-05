@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}{{ site_setting.site_name|default:"Trending News" }}{% endblock %}</title>
+
+    <!-- Trending News Favicons -->
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'image/trending-news-favicon.png' %}">
+    <link rel="shortcut icon" href="{% static 'image/trending-news-favicon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'image/trending-news-favicon.png' %}">
+
     <!-- Font Awesome for Social Media Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
