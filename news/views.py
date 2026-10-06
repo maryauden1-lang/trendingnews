@@ -21,18 +21,23 @@ def get_common_context():
     """Injects site settings, categories, breaking ticker, and dynamic legal pages everywhere."""
     site_setting = SiteSetting.objects.first()
     categories = Category.objects.all()
-    ticker_news = Article.objects.all()[:8]
+    
+    # Priority for ticker: published stories marked as is_breaking=True; fallback to latest published
+    breaking_qs = Article.objects.filter(status='published', is_breaking=True)[:8]
+    if not breaking_qs.exists():
+        breaking_qs = Article.objects.filter(status='published')[:8]
+
     legal_pages = LegalPage.objects.all()
     return {
         'site_setting': site_setting,
         'categories': categories,
-        'ticker_news': ticker_news,
+        'ticker_news': breaking_qs,
         'legal_pages': legal_pages,
     }
 
 
 def home(request):
-    all_articles = Article.objects.all()
+    all_articles = Article.objects.filter(status='published')
     
     # 1 featured lead story, 3 top side stories
     featured_lead = all_articles.first() if all_articles.exists() else None
@@ -65,7 +70,7 @@ def home(request):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug)
-    articles = Article.objects.filter(category=category)
+    articles = Article.objects.filter(category=category, status='published')
     
     featured_lead = articles.first() if articles.exists() else None
     featured_sub = list(articles[1:4]) if articles.count() > 1 else []
@@ -96,13 +101,26 @@ def category_detail(request, slug):
 
 
 def article_detail(request, slug):
-    article = get_object_or_404(Article, slug=slug)
+    # Staff/Superusers can preview drafts; public can only view published
+    if request.user.is_staff:
+        article = get_object_or_404(Article, slug=slug)
+    else:
+        article = get_object_or_404(Article, slug=slug, status='published')
+
     article.views_count += 1
     article.save(update_fields=['views_count'])
 
-    related_articles = Article.objects.filter(category=article.category).exclude(id=article.id)[:3]
+    related_articles = Article.objects.filter(
+        category=article.category, 
+        status='published'
+    ).exclude(id=article.id)[:3]
+
     if len(related_articles) < 3:
-        fallback = Article.objects.exclude(id=article.id).exclude(id__in=[r.id for r in related_articles])[:3 - len(related_articles)]
+        fallback = Article.objects.filter(status='published').exclude(
+            id=article.id
+        ).exclude(
+            id__in=[r.id for r in related_articles]
+        )[:3 - len(related_articles)]
         related_articles = list(related_articles) + list(fallback)
 
     word_count = len(article.content.split())
@@ -135,10 +153,12 @@ def search(request):
     if query:
         articles = Article.objects.filter(
             Q(title__icontains=query) |
+            Q(sub_headline__icontains=query) |
             Q(content__icontains=query) |
             Q(excerpt__icontains=query) |
+            Q(tags__icontains=query) |
             Q(category__name__icontains=query)
-        ).distinct()
+        ).filter(status='published').distinct()
 
     all_articles = list(articles)
     featured_lead = all_articles[0] if len(all_articles) > 0 else None

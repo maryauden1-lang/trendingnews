@@ -1,39 +1,49 @@
 from django.contrib.sitemaps import Sitemap
-from django.urls import reverse
-from .models import Article, Category
+from .models import Article, Category, LegalPage
 
 
 class ArticleSitemap(Sitemap):
-    changefreq = "daily"
+    changefreq = 'daily'
     priority = 0.9
 
     def items(self):
-        return Article.objects.all().order_by('-created_at')
+        return Article.objects.filter(status='published').order_by('-created_at')
 
     def lastmod(self, obj):
-        return obj.created_at
+        return obj.updated_at
 
     def location(self, obj):
-        return reverse('article_detail', args=[obj.slug])
+        return f"/article/{obj.slug}/"
 
 
 class CategorySitemap(Sitemap):
-    changefreq = "daily"
-    priority = 0.7
+    changefreq = 'daily'
+    priority = 0.8
 
     def items(self):
         return Category.objects.all()
 
     def location(self, obj):
-        return reverse('category_detail', args=[obj.slug])
+        return f"/category/{obj.slug}/"
 
 
 class StaticViewSitemap(Sitemap):
+    changefreq = 'hourly'
     priority = 1.0
-    changefreq = "always"
 
     def items(self):
-        return ['home']
+        return ['/']
 
     def location(self, item):
-        return reverse(item)
+        return item
+
+
+class LegalPageSitemap(Sitemap):
+    changefreq = 'monthly'
+    priority = 0.5
+
+    def items(self):
+        return LegalPage.objects.all()
+
+    def location(self, obj):
+        return f"/legal/{obj.slug}/"
