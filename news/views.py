@@ -15,21 +15,21 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.views.decorators.http import require_GET
 
-from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage
+from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdBanner
 from .emails import send_welcome_email, _send_async_mail
 
 
 def get_common_context():
-    """Injects site settings, categories, breaking ticker, trending-now algorithm, and legal pages."""
+    """Injects site settings, categories, breaking ticker, trending-now algorithm, active ads, and legal pages."""
     site_setting = SiteSetting.objects.first()
     categories = Category.objects.all()
     
-    # Priority for ticker: published stories marked as is_breaking=True; fallback to latest published
+    # Priority ticker: published stories marked as is_breaking=True; fallback to latest published
     breaking_qs = Article.objects.filter(status='published', is_breaking=True)[:8]
     if not breaking_qs.exists():
         breaking_qs = Article.objects.filter(status='published')[:8]
 
-    # Algorithm: Trending / Most Read in the past 72 hours, fallback to all-time views
+    # Algorithm: Trending / Most Read in past 72 hours, fallback to all-time
     recent_threshold = timezone.now() - timedelta(days=3)
     trending_qs = Article.objects.filter(
         status='published',
@@ -39,12 +39,21 @@ def get_common_context():
     if trending_qs.count() < 3:
         trending_qs = Article.objects.filter(status='published').order_by('-views_count', '-created_at')[:5]
 
+    # Active Sponsor Ads dictionary by slot
+    active_ads = {
+        'top_header': AdBanner.objects.filter(slot='top_header', is_active=True).first(),
+        'mid_article': AdBanner.objects.filter(slot='mid_article', is_active=True).first(),
+        'sidebar': AdBanner.objects.filter(slot='sidebar', is_active=True).first(),
+        'footer': AdBanner.objects.filter(slot='footer', is_active=True).first(),
+    }
+
     legal_pages = LegalPage.objects.all()
     return {
         'site_setting': site_setting,
         'categories': categories,
         'ticker_news': breaking_qs,
         'trending_articles': trending_qs,
+        'ads': active_ads,
         'legal_pages': legal_pages,
     }
 
@@ -120,17 +129,7 @@ def article_detail(request, slug):
     article.views_count += 1
     article.save(update_fields=['views_count'])
 
-    # Pull live updates if marked as a live blog
     live_updates = article.live_updates.all() if article.is_live_blog else []
-
-    # Intelligent paragraph split for mid-article newsletter box insertion
-    raw_paragraphs = [p.strip() for p in article.content.split('\n\n') if p.strip()]
-    if not raw_paragraphs:
-        raw_paragraphs = [article.content]
-
-    mid_index = max(1, len(raw_paragraphs) // 2)
-    content_part_1 = "\n\n".join(raw_paragraphs[:mid_index])
-    content_part_2 = "\n\n".join(raw_paragraphs[mid_index:]) if len(raw_paragraphs) > 1 else ""
 
     related_articles = Article.objects.filter(
         category=article.category, 
@@ -152,8 +151,6 @@ def article_detail(request, slug):
     context.update({
         'article': article,
         'live_updates': live_updates,
-        'content_part_1': content_part_1,
-        'content_part_2': content_part_2,
         'related_articles': related_articles,
         'reading_time': reading_time,
     })

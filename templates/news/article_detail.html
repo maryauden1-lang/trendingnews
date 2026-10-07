@@ -28,6 +28,8 @@
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'image/trending-news-favicon.png' %}">
 {% endif %}
 
+<link rel="alternate" type="application/rss+xml" title="Trending News RSS Feed" href="{% url 'article_feed' %}">
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -58,7 +60,6 @@
 
 {% block content %}
 <style>
-  /* Pulsing red beacon for live reporting */
   @keyframes livePulse {
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
@@ -85,7 +86,7 @@
     animation: livePulse 1.6s infinite;
   }
 
-  /* Responsive Story Container & Layout */
+  /* Responsive Story Layout */
   .story-layout {
     width: 100%;
     max-width: 1200px;
@@ -140,6 +141,48 @@
     font-family: Arial, Helvetica, sans-serif;
     margin-bottom: 25px;
     overflow-wrap: break-word;
+  }
+
+  /* Audio Reader Bar */
+  .audio-player-bar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 16px 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+  }
+  .audio-btn-play {
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+  }
+  .audio-btn-play:hover {
+    background: #bb1919;
+  }
+  .audio-speed-pill {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   /* Light Modern Newsletter Card */
@@ -254,6 +297,23 @@
     background: #15803d;
   }
 
+  /* Sponsor / Banner Slots */
+  .sponsor-container {
+    margin: 26px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+    background: #fdfdfd;
+  }
+  .sponsor-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+  }
+
   /* Live Timeline Item */
   .live-timeline-item {
     position: relative;
@@ -272,7 +332,6 @@
     background: #dc2626;
   }
 
-  /* Trending Sidebar Rank Numbers */
   .trend-rank {
     font-family: Impact, "Arial Black", sans-serif;
     font-size: 1.7rem;
@@ -281,7 +340,6 @@
     min-width: 28px;
   }
 
-  /* Mobile Adjustments (iPhone, iPad, Narrow Viewports) */
   @media (max-width: 992px) {
     .story-layout {
       grid-template-columns: 1fr;
@@ -365,6 +423,20 @@
         {% endif %}
       </div>
 
+      <!-- Zero-Latency Native Speech Audio Reader -->
+      <div class="audio-player-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="audioPlayBtn" onclick="toggleArticleSpeech()" class="audio-btn-play">
+            <i class="fa-solid fa-play" id="audioPlayIcon"></i>
+            <span id="audioPlayText">Listen to Article</span>
+          </button>
+          <span id="audioStatusText" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">{{ reading_time }} min audio</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button onclick="cycleSpeechSpeed()" id="audioSpeedBtn" class="audio-speed-pill" title="Playback Speed">1.0x</button>
+        </div>
+      </div>
+
       <!-- Social Share Toolbar -->
       <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0 20px; flex-wrap: wrap;">
         <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #000000; margin-right: 2px;">Share:</span>
@@ -415,7 +487,7 @@
       {% endif %}
 
       <!-- 1. FULL ARTICLE CONTENT BODY -->
-      <div class="article-body-text">
+      <div id="articleContentToRead" class="article-body-text">
         {% if article.location_dateline %}
           <strong style="color: #000; letter-spacing: 0.5px;">{{ article.location_dateline|upper }} — </strong>
         {% endif %}{{ article.content }}
@@ -475,6 +547,20 @@
           </div>
         </div>
       </div>
+
+      <!-- Mid-Article Sponsor Banner Slot -->
+      {% if ads.mid_article %}
+      <div class="sponsor-container">
+        <span class="sponsor-label">Sponsored Content</span>
+        {% if ads.mid_article.html_code %}
+          {{ ads.mid_article.html_code|safe }}
+        {% elif ads.mid_article.image %}
+          <a href="{{ ads.mid_article.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
+            <img src="{{ ads.mid_article.image.url }}" alt="{{ ads.mid_article.name }}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
 
       <!-- Live Blog Timeline Stream -->
       {% if article.is_live_blog %}
@@ -616,9 +702,24 @@
     </div>
   </main>
 
-  <!-- Right Sidebar: Trending Now (Moves beneath the article on phones) -->
+  <!-- Right Sidebar -->
   <aside class="sidebar-col" style="min-width: 0; width: 100%;">
     
+    <!-- Sidebar Sponsor Ad Slot (300x250) -->
+    {% if ads.sidebar %}
+    <div style="margin-bottom: 20px; text-align: center;">
+      <span class="sponsor-label">Sponsored</span>
+      {% if ads.sidebar.html_code %}
+        {{ ads.sidebar.html_code|safe }}
+      {% elif ads.sidebar.image %}
+        <a href="{{ ads.sidebar.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
+          <img src="{{ ads.sidebar.image.url }}" alt="{{ ads.sidebar.name }}" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+        </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Trending Now Widget -->
     <div style="background: #ffffff; border: 1px solid #e2ded5; border-radius: 12px; padding: 20px 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; box-sizing: border-box;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 8px;">
         <span style="width: 8px; height: 8px; background: #bb1919; border-radius: 50%;"></span>
@@ -665,7 +766,7 @@
 
 </div>
 
-<!-- Copy Link Script -->
+<!-- Scripts for Copy URL and Native Web Speech Synthesis -->
 <script>
 function copyArticleUrl() {
     navigator.clipboard.writeText(window.location.href).then(function() {
@@ -682,6 +783,85 @@ function copyArticleUrl() {
     }).catch(function(err) {
         alert("Link: " + window.location.href);
     });
+}
+
+/* Instant Speech Synthesis Audio Reader */
+let speechUtterance = null;
+let isSpeaking = false;
+let speechRate = 1.0;
+
+function toggleArticleSpeech() {
+    if (!('speechSynthesis' in window)) {
+        alert("Audio reader is not supported on this browser.");
+        return;
+    }
+
+    const synth = window.speechSynthesis;
+    const playIcon = document.getElementById('audioPlayIcon');
+    const playText = document.getElementById('audioPlayText');
+    const statusText = document.getElementById('audioStatusText');
+
+    if (synth.speaking && !synth.paused) {
+        synth.pause();
+        playIcon.className = "fa-solid fa-play";
+        playText.innerText = "Resume";
+        statusText.innerText = "Paused";
+        return;
+    }
+
+    if (synth.paused) {
+        synth.resume();
+        playIcon.className = "fa-solid fa-pause";
+        playText.innerText = "Pause";
+        statusText.innerText = "Playing audio...";
+        return;
+    }
+
+    // Prepare text to read: headline followed by article content
+    const titleText = "{{ article.title|escapejs }}";
+    const bodyContainer = document.getElementById('articleContentToRead');
+    const textToSpeak = titleText + ". " + (bodyContainer ? bodyContainer.innerText : "");
+
+    speechUtterance = new SpeechSynthesisUtterance(textToSpeak);
+    speechUtterance.rate = speechRate;
+    speechUtterance.pitch = 1.0;
+
+    speechUtterance.onstart = function() {
+        playIcon.className = "fa-solid fa-pause";
+        playText.innerText = "Pause";
+        statusText.innerText = "Playing audio...";
+    };
+
+    speechUtterance.onend = function() {
+        playIcon.className = "fa-solid fa-play";
+        playText.innerText = "Listen Again";
+        statusText.innerText = "Completed";
+    };
+
+    speechUtterance.onerror = function() {
+        playIcon.className = "fa-solid fa-play";
+        playText.innerText = "Listen";
+        statusText.innerText = "Error playing audio";
+    };
+
+    synth.speak(speechUtterance);
+}
+
+function cycleSpeechSpeed() {
+    const speedBtn = document.getElementById('audioSpeedBtn');
+    if (speechRate === 1.0) {
+        speechRate = 1.25;
+    } else if (speechRate === 1.25) {
+        speechRate = 1.5;
+    } else {
+        speechRate = 1.0;
+    }
+    speedBtn.innerText = speechRate.toFixed(2).replace('.00', '.0') + "x";
+
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        toggleArticleSpeech();
+    }
 }
 </script>
 {% endblock %}

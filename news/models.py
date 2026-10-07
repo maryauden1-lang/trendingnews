@@ -130,6 +130,10 @@ class Article(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('article_detail', kwargs={'slug': self.slug})
+
     @property
     def total_likes(self):
         return self.likes.count()
@@ -163,6 +167,29 @@ class LiveBlogUpdate(models.Model):
 
     def __str__(self):
         return f"[{self.created_at:%H:%M}] {self.headline} ({self.article.title[:30]}...)"
+
+
+class AdBanner(models.Model):
+    SLOT_CHOICES = (
+        ('top_header', 'Top Header Leaderboard (728x90 / responsive)'),
+        ('mid_article', 'Article Body Sponsor Slot (Responsive / 728x90)'),
+        ('sidebar', 'Sidebar Rectangle (300x250)'),
+        ('footer', 'Bottom Footer Banner'),
+    )
+
+    name = models.CharField(max_length=120, help_text="Campaign / Client Name (e.g. Zenith Bank Promo)")
+    slot = models.CharField(max_length=30, choices=SLOT_CHOICES, default='sidebar')
+    image = CloudinaryField('banner_image', blank=True, null=True, help_text="Upload static banner image")
+    destination_url = models.URLField(blank=True, help_text="Link where the click directs to")
+    html_code = models.TextField(blank=True, help_text="Paste Google AdSense / HTML embed script if not using image banner")
+    is_active = models.BooleanField(default=True, help_text="Toggle to display or hide this banner")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} [{self.get_slot_display()}] ({'Active' if self.is_active else 'Paused'})"
 
 
 class Subscriber(models.Model):
