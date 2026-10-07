@@ -398,3 +398,51 @@ def custom_sitemap_view(request, sitemaps):
     response = HttpResponse('\n'.join(xml_lines), content_type='application/xml; charset=utf-8')
     response['X-Robots-Tag'] = 'all'
     return response
+
+
+@require_GET
+def google_news_sitemap_view(request):
+    """Outputs standard Google News XML sitemap for stories published in the last 48 hours."""
+    two_days_ago = timezone.now() - timedelta(hours=48)
+    recent_articles = Article.objects.filter(
+        status='published',
+        created_at__gte=two_days_ago
+    ).order_by('-created_at')[:1000]
+
+    domain = request.get_host()
+    protocol = 'https'
+
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">'
+    ]
+
+    for item in recent_articles:
+        loc = f"{protocol}://{domain}{item.get_absolute_url()}"
+        pub_date = item.created_at.strftime("%Y-%m-%dT%H:%M:%S+01:00")
+        title_escaped = (
+            item.title.replace('&', '&amp;')
+                      .replace('<', '&lt;')
+                      .replace('>', '&gt;')
+                      .replace('"', '&quot;')
+                      .replace("'", '&apos;')
+        )
+
+        xml_lines.append('  <url>')
+        xml_lines.append(f'    <loc>{loc}</loc>')
+        xml_lines.append('    <news:news>')
+        xml_lines.append('      <news:publication>')
+        xml_lines.append('        <news:name>Trending News</news:name>')
+        xml_lines.append('        <news:language>en</news:language>')
+        xml_lines.append('      </news:publication>')
+        xml_lines.append(f'      <news:publication_date>{pub_date}</news:publication_date>')
+        xml_lines.append(f'      <news:title>{title_escaped}</news:title>')
+        xml_lines.append('    </news:news>')
+        xml_lines.append('  </url>')
+
+    xml_lines.append('</urlset>')
+
+    response = HttpResponse('\n'.join(xml_lines), content_type='application/xml; charset=utf-8')
+    response['X-Robots-Tag'] = 'all'
+    return response
