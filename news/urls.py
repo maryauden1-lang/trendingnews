@@ -18,6 +18,9 @@ urlpatterns = [
     path('feed/', LatestArticlesFeed(), name='article_feed'),
     path('rss/', LatestArticlesFeed(), name='article_rss'),
 
+    # Dedicated 48-Hour Google News XML Sitemap
+    path('news-sitemap.xml', views.google_news_sitemap_view, name='google_news_sitemap'),
+
     # User Authentication
     path('register/', views.user_register, name='register'),
     path('login/', views.user_login, name='login'),
