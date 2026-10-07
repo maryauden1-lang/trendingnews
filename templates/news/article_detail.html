@@ -86,7 +86,6 @@
     animation: livePulse 1.6s infinite;
   }
 
-  /* Responsive Story Layout */
   .story-layout {
     width: 100%;
     max-width: 1200px;
@@ -295,23 +294,6 @@
   }
   .whatsapp-btn:hover {
     background: #15803d;
-  }
-
-  /* Sponsor / Banner Slots */
-  .sponsor-container {
-    margin: 26px 0;
-    border-radius: 8px;
-    overflow: hidden;
-    text-align: center;
-    background: #fdfdfd;
-  }
-  .sponsor-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-    display: block;
   }
 
   /* Live Timeline Item */
@@ -548,13 +530,13 @@
         </div>
       </div>
 
-      <!-- Mid-Article Sponsor Banner Slot -->
+      <!-- Mid-Article / Above Comments Sponsor Banner Slot -->
       {% if ads.mid_article %}
-      <div class="sponsor-container">
-        <span class="sponsor-label">Sponsored Content</span>
+      <div style="margin: 25px 0; text-align: center; background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e2ded5;">
+        <span style="font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Sponsored Content</span>
         {% if ads.mid_article.html_code %}
           {{ ads.mid_article.html_code|safe }}
-        {% elif ads.mid_article.image %}
+        {% else %}
           <a href="{{ ads.mid_article.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
             <img src="{{ ads.mid_article.image.url }}" alt="{{ ads.mid_article.name }}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
           </a>
@@ -707,11 +689,11 @@
     
     <!-- Sidebar Sponsor Ad Slot (300x250) -->
     {% if ads.sidebar %}
-    <div style="margin-bottom: 20px; text-align: center;">
-      <span class="sponsor-label">Sponsored</span>
+    <div style="margin-bottom: 20px; text-align: center; background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #e2ded5; box-sizing: border-box;">
+      <span style="font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Sponsored</span>
       {% if ads.sidebar.html_code %}
         {{ ads.sidebar.html_code|safe }}
-      {% elif ads.sidebar.image %}
+      {% else %}
         <a href="{{ ads.sidebar.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
           <img src="{{ ads.sidebar.image.url }}" alt="{{ ads.sidebar.name }}" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
         </a>
@@ -785,9 +767,7 @@ function copyArticleUrl() {
     });
 }
 
-/* Instant Speech Synthesis Audio Reader */
 let speechUtterance = null;
-let isSpeaking = false;
 let speechRate = 1.0;
 
 function toggleArticleSpeech() {
@@ -817,7 +797,6 @@ function toggleArticleSpeech() {
         return;
     }
 
-    // Prepare text to read: headline followed by article content
     const titleText = "{{ article.title|escapejs }}";
     const bodyContainer = document.getElementById('articleContentToRead');
     const textToSpeak = titleText + ". " + (bodyContainer ? bodyContainer.innerText : "");

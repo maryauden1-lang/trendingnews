@@ -1,412 +1,310 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if selected_category %}
+    {{ selected_category.name }} News - {{ site_setting.site_name|default:"Trending News" }}
+  {% elif search_query %}
+    Search results for "{{ search_query }}" - {{ site_setting.site_name|default:"Trending News" }}
+  {% else %}
+    {{ site_setting.site_name|default:"Trending News" }} - Breaking News & Verified Reports
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <style>
-    /* ==========================================================================
-       BBC NEWS-STYLE CATEGORY HEADERS & TOUCH-SWIPE CAROUSELS
-       ========================================================================== */
-    
-    /* 1. BBC Two-Line Centered Header */
-    .bbc-section-divider {
-        display: flex;
-        align-items: center;
-        text-align: center;
-        margin: 32px 0 18px 0;
-        width: 100%;
+  .home-layout {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 12px 60px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+    overflow-x: hidden;
+  }
+
+  .lead-story-card {
+    background: #ffffff;
+    border: 1px solid #e2ded5;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .lead-story-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+  }
+
+  .sub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+
+  .sub-story-card {
+    background: #ffffff;
+    border: 1px solid #e2ded5;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+
+  .trend-rank {
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: #cbd5e1;
+    min-width: 28px;
+  }
+
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 30px 0;
+  }
+  .page-link-btn {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    color: #000000;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+  }
+  .page-link-btn.active {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+  }
+
+  @media (max-width: 992px) {
+    .home-layout {
+      grid-template-columns: 1fr;
+      padding: 10px 8px 50px;
+      gap: 24px;
     }
-
-    .bbc-section-divider::before,
-    .bbc-section-divider::after {
-        content: '';
-        flex: 1;
-        border-bottom: 2px solid #111111;
-    }
-
-    .bbc-section-divider-title {
-        padding: 0 18px;
-        font-size: 1.15rem;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        color: #111111;
-        font-family: Arial, Helvetica, sans-serif;
-        white-space: nowrap;
-    }
-
-    /* 2. Responsive Article Container */
-    .bbc-swipe-track {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    /* Card Architecture */
-    .bbc-card {
-        background-color: #ffffff;
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-
-    .bbc-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    }
-
-    .bbc-card-img-wrap {
-        width: 100%;
-        height: 180px;
-        background-color: #f1f1f1;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .bbc-card-img-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .bbc-card-pill {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background: #bb1919; /* BBC signature red */
-        color: #ffffff;
-        padding: 3px 8px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        border-radius: 2px;
-        letter-spacing: 0.5px;
-    }
-
-    .bbc-card-body {
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-    }
-
-    .bbc-card-meta {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #555555;
-        margin-bottom: 8px;
-    }
-
-    .bbc-card-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        line-height: 1.35;
-        margin-bottom: 8px;
-    }
-
-    .bbc-card-title a {
-        color: #111111;
-        text-decoration: none;
-    }
-
-    .bbc-card-title a:hover {
-        color: #bb1919;
-    }
-
-    .bbc-card-excerpt {
-        color: #333333;
-        font-size: 0.88rem;
-        line-height: 1.5;
-        margin-bottom: 14px;
-        flex-grow: 1;
-    }
-
-    /* 3. BBC-Style Pagination Controls */
-    .bbc-pagination-wrap {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 25px 0 35px 0;
-    }
-
-    .bbc-pagination-list {
-        display: flex;
-        gap: 8px;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        align-items: center;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .bbc-page-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 40px;
-        height: 40px;
-        padding: 0 12px;
-        font-size: 0.92rem;
-        font-weight: 800;
-        text-decoration: none;
-        color: #111111;
-        background: #ffffff;
-        border: 2px solid #111111;
-        border-radius: 2px;
-        transition: all 0.2s ease;
-    }
-
-    .bbc-page-btn:hover {
-        background: #111111;
-        color: #ffffff;
-    }
-
-    .bbc-page-btn.active {
-        background: #bb1919;
-        border-color: #bb1919;
-        color: #ffffff;
-        pointer-events: none;
-    }
-
-    .bbc-page-btn.nav-step {
-        padding: 0 16px;
-    }
-
-    /* 4. Mobile Touch Swipe Configuration */
-    @media (max-width: 768px) {
-        .hero-section-grid {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-        }
-
-        .hero-lead-img {
-            height: 230px !important;
-        }
-
-        /* Convert grid to native horizontal snap-carousel */
-        .bbc-swipe-track {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            padding: 4px 12px 16px 12px;
-            gap: 14px;
-            margin-left: -15px;
-            margin-right: -15px;
-            scrollbar-width: none;
-        }
-
-        .bbc-swipe-track::-webkit-scrollbar {
-            display: none;
-        }
-
-        .bbc-card {
-            flex: 0 0 82%;
-            max-width: 320px;
-            scroll-snap-align: start;
-        }
-
-        .bbc-section-divider-title {
-            font-size: 0.95rem;
-            padding: 0 10px;
-        }
-    }
+  }
 </style>
 
-<div class="container" style="background-color: transparent !important; padding-top: 15px;">
+<!-- Top Header Leaderboard Ad Slot (If Active in Admin) -->
+{% if ads.top_header %}
+<div style="max-width: 1200px; margin: 12px auto; padding: 0 12px; text-align: center; box-sizing: border-box;">
+  <span style="font-size: 0.65rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Advertisement</span>
+  {% if ads.top_header.html_code %}
+    {{ ads.top_header.html_code|safe }}
+  {% else %}
+    <a href="{{ ads.top_header.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
+      <img src="{{ ads.top_header.image.url }}" alt="{{ ads.top_header.name }}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
+    </a>
+  {% endif %}
+</div>
+{% endif %}
 
-    <!-- Top Headline Banner -->
-    <div class="bbc-section-divider">
-        <span class="bbc-section-divider-title">
-            {% if search_query %}
-                Search: {{ search_query }}
-            {% elif selected_category %}
-                {{ selected_category.name }}
-            {% else %}
-                Top Headlines
-            {% endif %}
-        </span>
-    </div>
+<div class="home-layout">
+  
+  <!-- Left Main Feed Column -->
+  <main class="main-feed-col" style="min-width: 0; width: 100%;">
 
-    {% if has_articles %}
-        <!-- 1. HERO FEATURE SHOWCASE (BBC LEAD + SIDE STORIES) -->
-        <section class="hero-section-grid" style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-bottom: 30px;">
-            
-            <!-- Lead Primary Story -->
-            {% if featured_lead %}
-            <article class="bbc-card" style="border-radius: 8px;">
-                <div class="hero-lead-img" style="width: 100%; height: 340px; background: #eae7df; position: relative; overflow: hidden;">
-                    {% if featured_lead.image %}
-                        <img src="{{ featured_lead.image.url }}" alt="{{ featured_lead.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                    {% else %}
-                        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eae7df; color:#000; font-weight:800;">
-                            TRENDING LEAD STORY
-                        </div>
-                    {% endif %}
-                    <span class="bbc-card-pill">
-                        &bull; {{ featured_lead.category.name }}
-                    </span>
-                </div>
-                <div style="padding: 22px; display: flex; flex-direction: column; flex-grow: 1;">
-                    <div class="bbc-card-meta">
-                        <span>{{ featured_lead.created_at|date:"M d, Y" }}</span> &bull; 
-                        <span>{{ featured_lead.views_count }} Reads</span> &bull; 
-                        <span>&hearts; {{ featured_lead.total_likes }}</span>
-                    </div>
-                    <h2 style="font-size: 1.6rem; font-weight: 900; line-height: 1.3; margin-bottom: 10px;">
-                        <a href="{% url 'article_detail' featured_lead.slug %}" style="color: #111111; text-decoration: none;">
-                            {{ featured_lead.title }}
-                        </a>
-                    </h2>
-                    <p style="color: #333333; font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; flex-grow: 1;">
-                        {{ featured_lead.excerpt }}
-                    </p>
-                    <div>
-                        <a href="{% url 'article_detail' featured_lead.slug %}" style="color: #bb1919; font-weight: 800; font-size: 0.9rem; text-decoration: none;">
-                            Full Story &rarr;
-                        </a>
-                    </div>
-                </div>
-            </article>
-            {% endif %}
-
-            <!-- Top Stories Column Stack (Right side on desktop) -->
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <div style="font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #111111; padding-bottom: 6px;">
-                    Trending Scoop
-                </div>
-                {% for item in featured_sub %}
-                <article style="background: #ffffff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px; display: flex; gap: 12px; align-items: center;">
-                    <div style="width: 95px; height: 75px; min-width: 95px; border-radius: 6px; overflow: hidden; background: #eae7df;">
-                        {% if item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                        {% else %}
-                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#000;">TN</div>
-                        {% endif %}
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <span style="font-size: 0.68rem; font-weight: 800; color: #bb1919; text-transform: uppercase;">
-                            {{ item.category.name }}
-                        </span>
-                        <h4 style="font-size: 0.92rem; font-weight: 800; line-height: 1.3; margin: 3px 0 5px 0;">
-                            <a href="{% url 'article_detail' item.slug %}" style="color: #111111; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                {{ item.title }}
-                            </a>
-                        </h4>
-                        <div style="font-size: 0.72rem; color: #666666; font-weight: 600;">
-                            {{ item.created_at|date:"M d" }} &bull; {{ item.views_count }} Reads
-                        </div>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-
-        </section>
-
-        <!-- 2. BBC HORIZONTAL SWIPE CAROUSEL SECTION -->
-        {% if remaining_articles %}
-            <!-- Two lines with centered title -->
-            <div class="bbc-section-divider">
-                <span class="bbc-section-divider-title">Must-Read Stories</span>
-            </div>
-
-            <!-- Touch swipe track on mobile / Multi-column grid on desktop -->
-            <div class="bbc-swipe-track">
-                {% for article in remaining_articles %}
-                <article class="bbc-card">
-                    <div class="bbc-card-img-wrap">
-                        {% if article.image %}
-                            <img src="{{ article.image.url }}" alt="{{ article.title }}">
-                        {% else %}
-                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eae7df; color: #111; font-weight: 700; font-size: 0.8rem;">
-                                Trending News
-                            </div>
-                        {% endif %}
-                        <span class="bbc-card-pill">
-                            {{ article.category.name }}
-                        </span>
-                    </div>
-                    
-                    <div class="bbc-card-body">
-                        <div class="bbc-card-meta">
-                            <span>{{ article.created_at|date:"M d, Y" }}</span> &bull;
-                            <span>{{ article.views_count }} Reads</span>
-                        </div>
-                        
-                        <h3 class="bbc-card-title">
-                            <a href="{% url 'article_detail' article.slug %}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                {{ article.title }}
-                            </a>
-                        </h3>
-                        
-                        <p class="bbc-card-excerpt">
-                            {{ article.excerpt|truncatechars:90 }}
-                        </p>
-                        
-                        <div>
-                            <a href="{% url 'article_detail' article.slug %}" style="color: #bb1919; font-weight: 800; font-size: 0.85rem; text-decoration: none;">
-                                Read Story &rarr;
-                            </a>
-                        </div>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-
-            <!-- 3. BBC-Style Pagination Controls -->
-            {% if page_obj.has_other_pages %}
-            <div class="bbc-pagination-wrap">
-                <ul class="bbc-pagination-list">
-                    {% if page_obj.has_previous %}
-                        <li>
-                            <a href="?page={{ page_obj.previous_page_number }}" class="bbc-page-btn nav-step">
-                                &larr; Previous
-                            </a>
-                        </li>
-                    {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li><span class="bbc-page-btn active">{{ num }}</span></li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li><a href="?page={{ num }}" class="bbc-page-btn">{{ num }}</a></li>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <li>
-                            <a href="?page={{ page_obj.next_page_number }}" class="bbc-page-btn nav-step">
-                                Next &rarr;
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
-            {% endif %}
-        {% endif %}
-
-    {% else %}
-        <div style="text-align: center; padding: 50px 20px; color: #111; background: #ffffff; border-radius: 8px; border: 1px solid #e5e5e5; margin: 30px 0;">
-            <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">No articles published yet.</h3>
-            <p style="color: #666666; font-size: 0.9rem;">Publish stories inside your admin dashboard to see them here.</p>
-        </div>
+    {% if search_query %}
+      <div style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #000;">
+        <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; text-transform: uppercase;">
+          Search Results: <span style="color: #bb1919;">"{{ search_query }}"</span>
+        </h2>
+      </div>
+    {% elif selected_category %}
+      <div style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #000;">
+        <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; text-transform: uppercase;">
+          {{ selected_category.name }}
+        </h2>
+      </div>
     {% endif %}
 
-    <!-- Newsletter Subscription Block -->
-    <section style="background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 40px 20px; text-align: center; margin: 40px 0 50px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-        <h3 style="font-size: 1.7rem; font-weight: 900; color: #111111; margin-bottom: 8px; font-family: Arial, sans-serif;">Stay In The Loop</h3>
-        <p style="color: #555555; max-width: 500px; margin: 0 auto 20px; font-size: 0.95rem;">Get breaking news, verified crime alerts, and celebrity updates directly in your inbox.</p>
-        <form action="{% url 'subscribe' %}" method="POST" style="display: flex; justify-content: center; gap: 10px; max-width: 460px; margin: 0 auto; flex-wrap: wrap;">
-            {% csrf_token %}
-            <input type="email" name="email" placeholder="Enter your email address..." required style="flex: 1; min-width: 230px; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.95rem; outline: none; color: #111; background: #fff;">
-            <button type="submit" style="background: #111111; color: #ffffff; font-weight: 800; border: none; border-radius: 4px; padding: 12px 22px; cursor: pointer; font-size: 0.95rem;">Subscribe</button>
-        </form>
-    </section>
+    <!-- 1. Featured Lead Hero Story -->
+    {% if featured_lead %}
+    <article class="lead-story-card">
+      {% if featured_lead.image %}
+        <a href="{% url 'article_detail' featured_lead.slug %}" style="display: block; width: 100%; max-height: 420px; overflow: hidden; background: #000;">
+          <img src="{{ featured_lead.image.url }}" alt="{{ featured_lead.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        </a>
+      {% endif %}
+      <div style="padding: 24px 22px;">
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+          <span style="background: #bb1919; color: #fff; padding: 3px 8px; border-radius: 3px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase;">
+            {{ featured_lead.category.name }}
+          </span>
+          {% if featured_lead.is_breaking %}
+            <span style="background: #000; color: #fff; padding: 3px 8px; border-radius: 3px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase;">
+              Breaking
+            </span>
+          {% endif %}
+          <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+            {{ featured_lead.created_at|date:"M d, Y" }}
+          </span>
+        </div>
+        <h2 style="font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 900; line-height: 1.25; margin: 0 0 10px;">
+          <a href="{% url 'article_detail' featured_lead.slug %}" style="color: #0f172a; text-decoration: none;">
+            {{ featured_lead.title }}
+          </a>
+        </h2>
+        <p style="font-size: 1rem; color: #475569; line-height: 1.6; margin: 0 0 14px;">
+          {{ featured_lead.excerpt|default:featured_lead.content|truncatechars:180 }}
+        </p>
+      </div>
+    </article>
+    {% endif %}
+
+    <!-- 2. Sub-Featured Grid (Stories 2 - 4) -->
+    {% if featured_sub %}
+    <div class="sub-grid">
+      {% for story in featured_sub %}
+      <article class="sub-story-card">
+        <div style="width: 100%; height: 160px; background: #eae7df; overflow: hidden;">
+          {% if story.image %}
+            <a href="{% url 'article_detail' story.slug %}">
+              <img src="{{ story.image.url }}" alt="{{ story.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </a>
+          {% else %}
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b;">TN</div>
+          {% endif %}
+        </div>
+        <div style="padding: 14px 16px; display: flex; flex-direction: column; flex-grow: 1;">
+          <span style="font-size: 0.68rem; font-weight: 800; color: #bb1919; text-transform: uppercase; margin-bottom: 6px;">
+            {{ story.category.name }}
+          </span>
+          <h3 style="font-size: 1.05rem; font-weight: 800; line-height: 1.35; margin: 0 0 8px;">
+            <a href="{% url 'article_detail' story.slug %}" style="color: #0f172a; text-decoration: none;">
+              {{ story.title|truncatechars:75 }}
+            </a>
+          </h3>
+          <div style="font-size: 0.74rem; color: #64748b; margin-top: auto; padding-top: 8px;">
+            {{ story.created_at|date:"M d, Y" }}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 3. Remaining Stories Feed -->
+    {% if remaining_articles %}
+      <div style="border-top: 2px solid #000; padding-top: 20px; margin-top: 20px;">
+        <h3 style="font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin-bottom: 16px;">
+          More News & In-Depth Reports
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          {% for story in remaining_articles %}
+          <article style="background: #ffffff; border: 1px solid #e2ded5; border-radius: 10px; padding: 14px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;">
+            {% if story.image %}
+              <div style="width: 130px; height: 95px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #eae7df;">
+                <a href="{% url 'article_detail' story.slug %}">
+                  <img src="{{ story.image.url }}" alt="{{ story.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </a>
+              </div>
+            {% endif %}
+            <div style="flex: 1 1 220px; min-width: 0;">
+              <span style="font-size: 0.68rem; font-weight: 800; color: #bb1919; text-transform: uppercase;">
+                {{ story.category.name }}
+              </span>
+              <h4 style="font-size: 1rem; font-weight: 800; line-height: 1.35; margin: 4px 0 6px;">
+                <a href="{% url 'article_detail' story.slug %}" style="color: #0f172a; text-decoration: none;">
+                  {{ story.title }}
+                </a>
+              </h4>
+              <div style="font-size: 0.74rem; color: #64748b;">
+                {{ story.created_at|date:"M d, Y" }} &bull; {{ story.views_count }} reads
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <div class="pagination-container">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link-btn">&larr; Previous</a>
+      {% endif %}
+      <span class="page-link-btn active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-link-btn">Next &rarr;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Right Sticky Sidebar -->
+  <aside class="sidebar-col" style="min-width: 0; width: 100%;">
+    
+    <!-- Sidebar Sponsor Banner Slot (300x250) -->
+    {% if ads.sidebar %}
+    <div style="margin-bottom: 20px; text-align: center; background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #e2ded5; box-sizing: border-box;">
+      <span style="font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Sponsored</span>
+      {% if ads.sidebar.html_code %}
+        {{ ads.sidebar.html_code|safe }}
+      {% else %}
+        <a href="{{ ads.sidebar.destination_url|default:'#' }}" target="_blank" rel="sponsored noopener">
+          <img src="{{ ads.sidebar.image.url }}" alt="{{ ads.sidebar.name }}" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+        </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Trending Now Widget -->
+    <div style="background: #ffffff; border: 1px solid #e2ded5; border-radius: 12px; padding: 20px 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 8px;">
+        <span style="width: 8px; height: 8px; background: #bb1919; border-radius: 50%;"></span>
+        <h3 style="font-size: 1.08rem; font-weight: 900; margin: 0; color: #000; letter-spacing: -0.3px; text-transform: uppercase;">
+          Trending Now
+        </h3>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        {% for top_story in trending_articles %}
+          <article style="display: flex; gap: 12px; align-items: flex-start; padding-bottom: 12px; {% if not forloop.last %}border-bottom: 1px solid #f1f5f9;{% endif %}">
+            <span class="trend-rank">0{{ forloop.counter }}</span>
+            <div style="flex-grow: 1; min-width: 0;">
+              <span style="font-size: 0.68rem; font-weight: 800; color: #bb1919; text-transform: uppercase;">{{ top_story.category.name }}</span>
+              <h4 style="font-size: 0.9rem; font-weight: 800; line-height: 1.35; margin: 3px 0 5px; word-break: break-word;">
+                <a href="{% url 'article_detail' top_story.slug %}" style="color: #0f172a; text-decoration: none;">
+                  {{ top_story.title|truncatechars:65 }}
+                </a>
+              </h4>
+              <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                <i class="fa-regular fa-eye"></i> {{ top_story.views_count }} reads
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <p style="color: #64748b; font-size: 0.82rem;">No trending stories yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Editorial Whistleblower / Tips Box -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 16px; text-align: center; box-sizing: border-box;">
+      <i class="fa-solid fa-shield-halved" style="font-size: 1.6rem; color: #0f172a; margin-bottom: 6px;"></i>
+      <h4 style="font-size: 0.9rem; font-weight: 800; margin: 0 0 5px; color: #0f172a;">Editorial Integrity</h4>
+      <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 10px; line-height: 1.4;">
+        Got a confidential news scoop, leak, or document? Reach our encrypted editorial desk.
+      </p>
+      <a href="mailto:{{ site_setting.contact_email }}" style="display: inline-block; background: #0f172a; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 6px 12px; border-radius: 4px; text-decoration: none;">
+        Submit a Leak
+      </a>
+    </div>
+
+  </aside>
 
 </div>
 {% endblock %}
