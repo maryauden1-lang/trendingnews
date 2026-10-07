@@ -31,7 +31,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_display = (
         'title', 
         'category', 
-        'author', 
+        'author_display', 
         'coverage_type_badge',
         'status_badge', 
         'is_breaking', 
@@ -89,25 +89,34 @@ class ArticleAdmin(admin.ModelAdmin):
         }),
     )
 
+    def author_display(self, obj):
+        if obj.author:
+            return obj.author.username
+        return format_html('<span style="color:#94a3b8; font-style:italic;">No Author</span>')
+    author_display.short_description = 'Author'
+    author_display.admin_order_field = 'author'
+
     def coverage_type_badge(self, obj):
-        if obj.is_live_blog:
+        if getattr(obj, 'is_live_blog', False):
             return format_html(
                 '<span style="background:#dc2626; color:#fff; padding:2px 7px; border-radius:3px; font-weight:800; font-size:10px; letter-spacing:0.5px; text-transform:uppercase;">&#x25CF; LIVE</span>'
             )
-        return format_html('<span style="color:#64748b; font-size:11px;">Standard</span>')
+        return format_html('<span style="color:#94a3b8; font-size:11px;">Standard</span>')
     coverage_type_badge.short_description = 'Format'
 
     def status_badge(self, obj):
+        status_val = getattr(obj, 'status', 'published') or 'published'
         colors = {
             'published': '#16a34a',
             'draft': '#d97706',
             'archived': '#64748b',
         }
-        color = colors.get(obj.status, '#000')
+        color = colors.get(status_val, '#16a34a')
+        label = dict(Article.STATUS_CHOICES).get(status_val, status_val.capitalize())
         return format_html(
             '<span style="background:{}; color:#fff; padding:3px 8px; border-radius:4px; font-weight:800; font-size:11px; text-transform:uppercase;">{}</span>',
             color,
-            obj.get_status_display()
+            label
         )
     status_badge.short_description = 'Status'
 
@@ -116,7 +125,7 @@ class ArticleAdmin(admin.ModelAdmin):
             obj.author = request.user
         super().save_model(request, obj, form, change)
         
-        if not change and obj.status == 'published':
+        if not change and getattr(obj, 'status', 'published') == 'published':
             send_new_article_alert(obj)
 
 
