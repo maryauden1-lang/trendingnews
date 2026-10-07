@@ -101,40 +101,110 @@
     }
   }
 
-  /* Mid-Article Newsletter Capture */
-  .mid-article-newsletter {
-    background: linear-gradient(135deg, #090d16 0%, #172136 100%);
-    color: #ffffff;
-    border-radius: 12px;
-    padding: 28px 24px;
-    margin: 34px 0;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+  /* Modern Light/Fresh Newsletter Card */
+  .lite-newsletter-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px 26px;
+    margin: 24px 0 35px;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .mid-nl-btn {
-    background: #e11d48;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 0.9rem;
-    padding: 11px 22px;
-    cursor: pointer;
-    transition: background 0.2s;
+  .lite-newsletter-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #bb1919 0%, #f43f5e 50%, #fb7185 100%);
   }
-  .mid-nl-btn:hover { background: #be123c; }
+  .lite-newsletter-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
 
-  /* WhatsApp Channel Banner */
+  .lite-nl-input {
+    flex-grow: 1;
+    min-width: 220px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .lite-nl-input:focus {
+    background: #ffffff;
+    border-color: #bb1919;
+    box-shadow: 0 0 0 3px rgba(187, 25, 25, 0.12);
+  }
+
+  .lite-nl-btn {
+    background: #bb1919;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.92rem;
+    padding: 0 24px;
+    height: 48px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+  .lite-nl-btn:hover {
+    background: #991b1b;
+    box-shadow: 0 4px 12px rgba(187, 25, 25, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* WhatsApp Community Broadcast Alert Bar */
   .whatsapp-channel-bar {
-    background: #ecfdf5;
-    border: 1.5px solid #a7f3d0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin: 20px 0 28px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
     flex-wrap: wrap;
+    transition: all 0.2s ease;
+  }
+  .whatsapp-channel-bar:hover {
+    border-color: #86efac;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08);
+  }
+
+  .whatsapp-btn {
+    background: #16a34a;
+    color: #ffffff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .whatsapp-btn:hover {
+    background: #15803d;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.28);
+    transform: translateY(-1px);
   }
 
   /* Live Timeline Item */
@@ -219,22 +289,35 @@
         {% endif %}
       </div>
 
-      <!-- WhatsApp Community Broadcast Alert Bar -->
-      <div class="whatsapp-channel-bar">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <i class="fa-brands fa-whatsapp" style="font-size: 1.6rem; color: #059669;"></i>
-          <div>
-            <strong style="color: #065f46; font-size: 0.92rem; display: block;">Instant WhatsApp Alerts</strong>
-            <span style="color: #047857; font-size: 0.82rem;">Get breaking news alerts straight to your phone.</span>
-          </div>
-        </div>
-        <a href="{{ site_setting.whatsapp_channel_url|default:'https://whatsapp.com' }}" target="_blank" 
-           style="background: #059669; color: #ffffff; padding: 7px 16px; border-radius: 6px; font-weight: 800; font-size: 0.84rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-          Join Channel &rarr;
+      <!-- Social Share Toolbar -->
+      <div style="display: flex; align-items: center; gap: 10px; margin: 18px 0 24px; flex-wrap: wrap;">
+        <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #000000; margin-right: 4px;">Share:</span>
+        
+        <a href="https://api.whatsapp.com/send?text={{ article.title|urlencode }}%20{{ request.build_absolute_uri|urlencode }}" 
+           target="_blank" 
+           style="background: #25D366; color: #ffffff; padding: 7px 14px; border-radius: 4px; font-size: 0.84rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
         </a>
+
+        <a href="https://twitter.com/intent/tweet?text={{ article.title|urlencode }}&url={{ request.build_absolute_uri|urlencode }}" 
+           target="_blank" 
+           style="background: #000000; color: #ffffff; padding: 7px 14px; border-radius: 4px; font-size: 0.84rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-brands fa-x-twitter"></i> X
+        </a>
+
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+           target="_blank" 
+           style="background: #1877F2; color: #ffffff; padding: 7px 14px; border-radius: 4px; font-size: 0.84rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-brands fa-facebook-f"></i> Share
+        </a>
+
+        <button onclick="copyArticleUrl()" id="copyBtn" 
+                style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #000000; padding: 7px 14px; border-radius: 4px; font-size: 0.84rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-regular fa-copy"></i> <span id="copyBtnText">Copy Link</span>
+        </button>
       </div>
 
-      <!-- Main Featured Media -->
+      <!-- Main Featured Media (Video OR Image with BBC Credit/Caption) -->
       {% if article.lead_video_url %}
         <div style="width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 25px; border: 1px solid #e2ded5; position: relative; padding-bottom: 56.25%; height: 0; background: #000;">
           <iframe src="{{ article.lead_video_url }}" style="position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
@@ -255,10 +338,17 @@
         </div>
       {% endif %}
 
-      <!-- BBC Key Highlights -->
+      <!-- 1. FULL ARTICLE CONTENT BODY (Unbroken) -->
+      <div style="font-size: 1.15rem; line-height: 2; color: #000000; font-weight: 400; white-space: pre-line; font-family: Arial, Helvetica, sans-serif; margin-bottom: 30px;">
+        {% if article.location_dateline %}
+          <strong style="color: #000; letter-spacing: 0.5px;">{{ article.location_dateline|upper }} — </strong>
+        {% endif %}{{ article.content }}
+      </div>
+
+      <!-- 2. KEY TAKEAWAYS (Under Article Body Content) -->
       {% if article.key_points_list %}
-      <div style="background: #f8fafc; border-left: 4px solid #bb1919; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; border-radius: 0 8px 8px 0; padding: 20px 24px; margin-bottom: 30px;">
-        <div style="font-size: 0.85rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; color: #bb1919; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+      <div style="background: #f8fafc; border-left: 4px solid #bb1919; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; border-radius: 0 10px 10px 0; padding: 22px 24px; margin: 30px 0 24px;">
+        <div style="font-size: 0.84rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; color: #bb1919; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
           <i class="fa-solid fa-list-check"></i> KEY TAKEAWAYS
         </div>
         <ul style="margin: 0; padding-left: 20px; color: #1e293b; font-size: 1rem; line-height: 1.7; font-weight: 600;">
@@ -269,40 +359,48 @@
       </div>
       {% endif %}
 
-      <!-- Part 1 of Body -->
-      <div style="font-size: 1.15rem; line-height: 2; color: #000000; font-weight: 400; white-space: pre-line; font-family: Arial, Helvetica, sans-serif;">
-        {% if article.location_dateline %}
-          <strong style="color: #000; letter-spacing: 0.5px;">{{ article.location_dateline|upper }} — </strong>
-        {% endif %}{{ content_part_1 }}
+      <!-- 3. WHATSAPP BROADCAST BAR (Directly Under Key Takeaways) -->
+      <div class="whatsapp-channel-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="background: #dcfce7; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa-brands fa-whatsapp" style="font-size: 1.4rem; color: #16a34a;"></i>
+          </div>
+          <div>
+            <strong style="color: #14532d; font-size: 0.94rem; display: block; font-weight: 800;">Get Breaking Alerts on WhatsApp</strong>
+            <span style="color: #166534; font-size: 0.82rem;">Join our verified channel for unfiltered real-time scoops.</span>
+          </div>
+        </div>
+        <a href="{{ site_setting.whatsapp_channel_url|default:'https://whatsapp.com' }}" target="_blank" class="whatsapp-btn">
+          Join Channel &rarr;
+        </a>
       </div>
 
-      <!-- High-Conversion Mid-Article Newsletter Box -->
-      <div class="mid-article-newsletter">
-        <div style="display: flex; gap: 14px; align-items: flex-start;">
-          <i class="fa-regular fa-envelope-open" style="font-size: 1.8rem; color: #f43f5e; margin-top: 2px;"></i>
+      <!-- 4. LITE MODERN NEWSLETTER SUBSCRIPTION (Directly Follows WhatsApp) -->
+      <div class="lite-newsletter-card">
+        <div style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="background: #fef2f2; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa-regular fa-envelope-open" style="font-size: 1.3rem; color: #bb1919;"></i>
+          </div>
           <div style="flex-grow: 1;">
-            <h4 style="font-size: 1.18rem; font-weight: 900; margin: 0 0 6px; color: #ffffff;">Never miss verified reporting</h4>
-            <p style="font-size: 0.92rem; color: #cbd5e1; margin: 0 0 16px; line-height: 1.5;">
-              Get our daily morning news digest delivered straight to your inbox every morning. Unbiased. Free.
+            <h4 style="font-size: 1.15rem; font-weight: 900; margin: 0 0 4px; color: #0f172a; letter-spacing: -0.3px;">
+              Stay ahead with verified reporting
+            </h4>
+            <p style="font-size: 0.88rem; color: #64748b; margin: 0 0 16px; line-height: 1.5;">
+              Receive our curated morning briefing straight to your inbox. Free of noise, pure journalism.
             </p>
-            <form action="{% url 'subscribe' %}" method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <form action="{% url 'subscribe' %}" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
               {% csrf_token %}
-              <input type="email" name="email" required placeholder="Enter your email address" 
-                     style="flex-grow: 1; min-width: 220px; height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 0.95rem;">
-              <button type="submit" class="mid-nl-btn">Subscribe Now</button>
+              <input type="email" name="email" required placeholder="Enter your email address..." class="lite-nl-input">
+              <button type="submit" class="lite-nl-btn">
+                <span>Subscribe</span>
+                <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem;"></i>
+              </button>
             </form>
           </div>
         </div>
       </div>
 
-      <!-- Part 2 of Body -->
-      {% if content_part_2 %}
-      <div style="font-size: 1.15rem; line-height: 2; color: #000000; font-weight: 400; white-space: pre-line; font-family: Arial, Helvetica, sans-serif;">
-        {{ content_part_2 }}
-      </div>
-      {% endif %}
-
-      <!-- Live Blog Stream (Renders if is_live_blog is True) -->
+      <!-- Live Blog Timeline Stream (If Article is Live Blog) -->
       {% if article.is_live_blog %}
       <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #dc2626;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
@@ -341,7 +439,7 @@
 
       <!-- Tags Cluster -->
       {% if article.tags_list %}
-      <div style="margin: 30px 0 20px; padding-top: 18px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <div style="margin: 25px 0 20px; padding-top: 18px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #64748b; margin-right: 4px;">Topics:</span>
         {% for tag in article.tags_list %}
           <a href="{% url 'search' %}?q={{ tag|urlencode }}" style="background: #f1f5f9; color: #1e293b; padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0;">
@@ -351,7 +449,7 @@
       </div>
       {% endif %}
 
-      <!-- Likes Section -->
+      <!-- Likes Reaction -->
       <div style="display: flex; align-items: center; gap: 15px; margin: 25px 0; padding: 14px 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
         {% if user.is_authenticated %}
           <form action="{% url 'like_article' article.slug %}" method="POST" style="margin: 0;">
@@ -366,6 +464,39 @@
           </div>
         {% endif %}
       </div>
+
+      <!-- Recommended Related Stories -->
+      {% if related_articles %}
+      <div style="margin-top: 40px; border-top: 2px solid #000000; padding-top: 22px;">
+        <h3 style="font-size: 1.3rem; font-weight: 900; color: #000000; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;">
+          Recommended For You
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px;">
+          {% for related in related_articles %}
+          <article style="background: #fdfdfd; border: 1px solid #e2ded5; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="width: 100%; height: 125px; background: #eae7df;">
+              {% if related.image %}
+                <img src="{{ related.image.url }}" alt="{{ related.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+              {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">TN</div>
+              {% endif %}
+            </div>
+            <div style="padding: 12px 14px; display: flex; flex-direction: column; flex-grow: 1;">
+              <span style="font-size: 0.68rem; font-weight: 800; color: #bb1919; text-transform: uppercase;">{{ related.category.name }}</span>
+              <h4 style="font-size: 0.95rem; font-weight: 800; line-height: 1.3; margin: 5px 0 8px;">
+                <a href="{% url 'article_detail' related.slug %}" style="color: #000000; text-decoration: none;">
+                  {{ related.title|truncatechars:65 }}
+                </a>
+              </h4>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: auto;">
+                {{ related.created_at|date:"M d, Y" }}
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Comments Section -->
       <div style="margin-top: 35px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
@@ -415,7 +546,7 @@
     <!-- Algorithmic "Trending Now" / "Most Read" Widget -->
     <div style="background: #ffffff; border: 1px solid #e2ded5; border-radius: 12px; padding: 24px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 24px;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-        <span style="width: 8px; height: 8px; background: #e11d48; border-radius: 50%;"></span>
+        <span style="width: 8px; height: 8px; background: #bb1919; border-radius: 50%;"></span>
         <h3 style="font-size: 1.15rem; font-weight: 900; margin: 0; color: #000; letter-spacing: -0.3px; text-transform: uppercase;">
           Trending Now
         </h3>
@@ -426,7 +557,7 @@
           <article style="display: flex; gap: 14px; align-items: flex-start; padding-bottom: 14px; {% if not forloop.last %}border-bottom: 1px solid #f1f5f9;{% endif %}">
             <span class="trend-rank">0{{ forloop.counter }}</span>
             <div style="flex-grow: 1;">
-              <span style="font-size: 0.7rem; font-weight: 800; color: #e11d48; text-transform: uppercase;">{{ top_story.category.name }}</span>
+              <span style="font-size: 0.7rem; font-weight: 800; color: #bb1919; text-transform: uppercase;">{{ top_story.category.name }}</span>
               <h4 style="font-size: 0.94rem; font-weight: 800; line-height: 1.35; margin: 4px 0 6px;">
                 <a href="{% url 'article_detail' top_story.slug %}" style="color: #0f172a; text-decoration: none;">
                   {{ top_story.title|truncatechars:70 }}
@@ -458,4 +589,24 @@
   </aside>
 
 </div>
+
+<!-- Copy Link Script -->
+<script>
+function copyArticleUrl() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        const btnText = document.getElementById('copyBtnText');
+        const original = btnText.innerText;
+        btnText.innerText = "Link Copied!";
+        btnText.parentElement.style.background = "#22c55e";
+        btnText.parentElement.style.color = "#ffffff";
+        setTimeout(() => {
+            btnText.innerText = original;
+            btnText.parentElement.style.background = "#f1f5f9";
+            btnText.parentElement.style.color = "#000000";
+        }, 2200);
+    }).catch(function(err) {
+        alert("Link: " + window.location.href);
+    });
+}
+</script>
 {% endblock %}
