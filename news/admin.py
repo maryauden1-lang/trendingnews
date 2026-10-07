@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import redirect
 from django.contrib import messages
-from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdminCommandLog, LiveBlogUpdate
+from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdminCommandLog, LiveBlogUpdate, AdBanner
 from .emails import send_new_article_alert
 
 import news.command_runner as cr
@@ -14,6 +14,14 @@ def run_console_rule(cmd, user):
         if callable(fn):
             return fn(cmd, user)
     return f"Executed command: {cmd}"
+
+
+@admin.register(AdBanner)
+class AdBannerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slot', 'is_active', 'destination_url', 'created_at')
+    list_filter = ('slot', 'is_active', 'created_at')
+    search_fields = ('name', 'destination_url')
+    list_editable = ('is_active',)
 
 
 @admin.register(LiveBlogUpdate)
