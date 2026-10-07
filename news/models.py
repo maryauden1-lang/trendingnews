@@ -94,7 +94,11 @@ class Article(models.Model):
         help_text="Comma-separated topics (e.g. Politics, Economy, Champions League, Technology)."
     )
 
-    # Publishing Controls & Signals
+    # Live Blog & Publishing Controls
+    is_live_blog = models.BooleanField(
+        default=False, 
+        help_text="Enable live rolling coverage with timestamped updates (BBC-style liveblog)."
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='published')
     is_breaking = models.BooleanField(
         default=False, 
@@ -132,20 +136,33 @@ class Article(models.Model):
 
     @property
     def key_points_list(self):
-        """Splits key_points text field by newline for direct template iteration."""
         if not self.key_points:
             return []
         return [point.strip() for point in self.key_points.splitlines() if point.strip()]
 
     @property
     def tags_list(self):
-        """Splits comma-separated tags into clean individual strings."""
         if not self.tags:
             return []
         return [t.strip() for t in self.tags.split(',') if t.strip()]
 
     def __str__(self):
         return self.title
+
+
+class LiveBlogUpdate(models.Model):
+    """Timestamped micro-posts inside an active breaking story."""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='live_updates')
+    headline = models.CharField(max_length=255, help_text="Short headline for this specific update")
+    body = models.TextField(help_text="Short update text (supports paragraphs)")
+    image = CloudinaryField('image', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.created_at:%H:%M}] {self.headline} ({self.article.title[:30]}...)"
 
 
 class Subscriber(models.Model):
@@ -174,6 +191,7 @@ class SiteSetting(models.Model):
     site_description = models.TextField(blank=True, default="Your trusted source for verified news, crime alerts, and breaking stories.")
     site_logo = CloudinaryField('logo', blank=True, null=True)
     contact_email = models.EmailField(default="contact@trendingnewsonline.org")
+    whatsapp_channel_url = models.URLField(blank=True, help_text="Direct link to your WhatsApp Channel or Community group.")
     x_url = models.URLField(blank=True, verbose_name="X / Twitter URL")
     facebook_url = models.URLField(blank=True, verbose_name="Facebook URL")
     instagram_url = models.URLField(blank=True, verbose_name="Instagram URL")

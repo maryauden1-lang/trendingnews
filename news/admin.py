@@ -3,10 +3,9 @@ from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import redirect
 from django.contrib import messages
-from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdminCommandLog
+from .models import Article, Category, Subscriber, Comment, SiteSetting, LegalPage, AdminCommandLog, LiveBlogUpdate
 from .emails import send_new_article_alert
 
-# Auto-detect the command runner function from command_runner.py
 import news.command_runner as cr
 
 def run_console_rule(cmd, user):
@@ -17,18 +16,29 @@ def run_console_rule(cmd, user):
     return f"Executed command: {cmd}"
 
 
+class LiveBlogUpdateInline(admin.StackedInline):
+    model = LiveBlogUpdate
+    extra = 1
+    classes = ('collapse',)
+    fields = ('headline', 'body', 'image')
+    verbose_name = "Live Blog Post / Timestamped Update"
+    verbose_name_plural = "Live Blog Coverage Updates (Appears in live timeline)"
+
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+    inlines = [LiveBlogUpdateInline]
     list_display = (
         'title', 
         'category', 
         'author', 
+        'coverage_type_badge',
         'status_badge', 
         'is_breaking', 
         'views_count', 
         'created_at'
     )
-    list_filter = ('status', 'is_breaking', 'category', 'created_at')
+    list_filter = ('status', 'is_live_blog', 'is_breaking', 'category', 'created_at')
     search_fields = ('title', 'sub_headline', 'content', 'excerpt', 'tags', 'location_dateline')
     prepopulated_fields = {'slug': ('title',)}
     list_editable = ('is_breaking',)
@@ -70,13 +80,22 @@ class ArticleAdmin(admin.ModelAdmin):
                 'tags'
             )
         }),
-        ('6. Workflow, Breaking News & Status', {
+        ('6. Live Coverage & Publishing Workflow', {
             'fields': (
+                'is_live_blog',
                 'status',
                 'is_breaking',
             )
         }),
     )
+
+    def coverage_type_badge(self, obj):
+        if obj.is_live_blog:
+            return format_html(
+                '<span style="background:#dc2626; color:#fff; padding:2px 7px; border-radius:3px; font-weight:800; font-size:10px; letter-spacing:0.5px; text-transform:uppercase;">&#x25CF; LIVE</span>'
+            )
+        return format_html('<span style="color:#64748b; font-size:11px;">Standard</span>')
+    coverage_type_badge.short_description = 'Format'
 
     def status_badge(self, obj):
         colors = {
@@ -97,7 +116,6 @@ class ArticleAdmin(admin.ModelAdmin):
             obj.author = request.user
         super().save_model(request, obj, form, change)
         
-        # Only trigger subscriber blast on new published stories
         if not change and obj.status == 'published':
             send_new_article_alert(obj)
 
@@ -133,7 +151,7 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(SiteSetting)
 class SiteSettingAdmin(admin.ModelAdmin):
-    list_display = ('site_name', 'contact_email')
+    list_display = ('site_name', 'contact_email', 'whatsapp_channel_url')
 
     def has_add_permission(self, request):
         return not SiteSetting.objects.exists()

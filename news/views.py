@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -18,7 +20,7 @@ from .emails import send_welcome_email, _send_async_mail
 
 
 def get_common_context():
-    """Injects site settings, categories, breaking ticker, and dynamic legal pages everywhere."""
+    """Injects site settings, categories, breaking ticker, trending-now algorithm, and legal pages."""
     site_setting = SiteSetting.objects.first()
     categories = Category.objects.all()
     
@@ -27,11 +29,22 @@ def get_common_context():
     if not breaking_qs.exists():
         breaking_qs = Article.objects.filter(status='published')[:8]
 
+    # Algorithm: Trending / Most Read in the past 72 hours, fallback to all-time views
+    recent_threshold = timezone.now() - timedelta(days=3)
+    trending_qs = Article.objects.filter(
+        status='published',
+        created_at__gte=recent_threshold
+    ).order_by('-views_count', '-created_at')[:5]
+
+    if trending_qs.count() < 3:
+        trending_qs = Article.objects.filter(status='published').order_by('-views_count', '-created_at')[:5]
+
     legal_pages = LegalPage.objects.all()
     return {
         'site_setting': site_setting,
         'categories': categories,
         'ticker_news': breaking_qs,
+        'trending_articles': trending_qs,
         'legal_pages': legal_pages,
     }
 
@@ -39,11 +52,9 @@ def get_common_context():
 def home(request):
     all_articles = Article.objects.filter(status='published')
     
-    # 1 featured lead story, 3 top side stories
     featured_lead = all_articles.first() if all_articles.exists() else None
     featured_sub = list(all_articles[1:4]) if all_articles.count() > 1 else []
     
-    # Remaining articles get paginated (8 per page)
     remaining_qs = all_articles[4:] if all_articles.count() > 4 else Article.objects.none()
     
     page = request.GET.get('page', 1)
@@ -101,7 +112,6 @@ def category_detail(request, slug):
 
 
 def article_detail(request, slug):
-    # Staff/Superusers can preview drafts; public can only view published
     if request.user.is_staff:
         article = get_object_or_404(Article, slug=slug)
     else:
@@ -109,6 +119,18 @@ def article_detail(request, slug):
 
     article.views_count += 1
     article.save(update_fields=['views_count'])
+
+    # Pull live updates if marked as a live blog
+    live_updates = article.live_updates.all() if article.is_live_blog else []
+
+    # Intelligent paragraph split for mid-article newsletter box insertion
+    raw_paragraphs = [p.strip() for p in article.content.split('\n\n') if p.strip()]
+    if not raw_paragraphs:
+        raw_paragraphs = [article.content]
+
+    mid_index = max(1, len(raw_paragraphs) // 2)
+    content_part_1 = "\n\n".join(raw_paragraphs[:mid_index])
+    content_part_2 = "\n\n".join(raw_paragraphs[mid_index:]) if len(raw_paragraphs) > 1 else ""
 
     related_articles = Article.objects.filter(
         category=article.category, 
@@ -129,6 +151,9 @@ def article_detail(request, slug):
     context = get_common_context()
     context.update({
         'article': article,
+        'live_updates': live_updates,
+        'content_part_1': content_part_1,
+        'content_part_2': content_part_2,
         'related_articles': related_articles,
         'reading_time': reading_time,
     })
@@ -211,7 +236,7 @@ def subscribe(request):
                 messages.success(request, "Welcome! A confirmation email has been sent to your inbox.")
         else:
             messages.info(request, "Please enter a valid email address.")
-    return redirect('home')
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 def user_register(request):
@@ -284,7 +309,6 @@ def user_logout(request):
 
 
 def password_reset_request_view(request):
-    """Direct password reset view with Brevo HTTPS dispatch."""
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
         users = User.objects.filter(email__iexact=email, is_active=True)
@@ -321,14 +345,12 @@ def password_reset_request_view(request):
 
 
 def password_reset_done_view(request):
-    """Displays check-your-inbox screen with full site context."""
     context = get_common_context()
     return render(request, 'registration/password_reset_done.html', context)
 
 
 @require_GET
 def custom_sitemap_view(request, sitemaps):
-    """Generates standard, strictly valid sitemap XML with full namespace for Google Search Console."""
     xml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
