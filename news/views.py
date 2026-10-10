@@ -126,8 +126,14 @@ def article_detail(request, slug):
     else:
         article = get_object_or_404(Article, slug=slug, status='published')
 
-    article.views_count += 1
-    article.save(update_fields=['views_count'])
+    # Anti-inflation view tracking:
+    # 1. Staff and admins never increment the counter
+    # 2. Regular visitors only count once per browser session
+    session_key = f'viewed_article_{article.id}'
+    if not request.user.is_staff and not request.session.get(session_key, False):
+        article.views_count += 1
+        article.save(update_fields=['views_count'])
+        request.session[session_key] = True
 
     live_updates = article.live_updates.all() if article.is_live_blog else []
 
